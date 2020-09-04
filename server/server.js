@@ -354,8 +354,9 @@ async function setupLocalAuth()
 			//logger.warn('login  %o',req.query.state);
 			//logger.warn('login  %o',req.query);
 			//const state = JSON.parse(base64.decode(req.query.state));
-			const { peerId, roomId } = req.query;
-			res.render('login',{peerId:peerId,roomId:roomId});
+			//const { peerId, roomId } = req.query;
+			//res.render('login',{peerId:peerId,roomId:roomId});
+			res.render('login');
 		});
 
 	app.post('/auth/login',
@@ -405,7 +406,7 @@ async function setupLocalAuth()
 				//logger.info('-----------------------------');
 
 				res.send(loginHelper({
-					displayName : req.user.username,
+					displayName : req.user.displayName,
 					picture     : null
 				}));
 			}
