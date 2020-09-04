@@ -37,6 +37,9 @@ const interactiveServer = require('./lib/interactiveServer');
 const promExporter = require('./lib/promExporter');
 const { v4: uuidv4 } = require('uuid');
 
+const LocalStrategy = require('passport-local').Strategy;
+const db = require('./db');
+
 /* eslint-disable no-console */
 console.log('- process.env.DEBUG:', process.env.DEBUG);
 console.log('- config.mediasoup.worker.logLevel:', config.mediasoup.worker.logLevel);
@@ -84,6 +87,10 @@ const tls =
 
 const app = express();
 
+// Configure view engine to render EJS templates.
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+
 app.use(helmet.hsts());
 
 app.use(cookieParser());
@@ -109,7 +116,7 @@ if (config.trustProxy)
 }
 
 app.use(session);
-
+/*
 passport.serializeUser((user, done) =>
 {
 	done(null, user);
@@ -119,6 +126,7 @@ passport.deserializeUser((user, done) =>
 {
 	done(null, user);
 });
+*/
 
 let mainListener;
 let io;
@@ -146,6 +154,8 @@ async function run()
 		{
 			await setupAuth();
 		}
+
+		await setupLocalAuth();
 
 		// Run a mediasoup Worker.
 		await runMediasoupWorkers();
@@ -298,6 +308,114 @@ function setupOIDC(oidcIssuer)
 	passport.use('oidc', oidcStrategy);
 }
 
+async function setupLocalAuth()
+{
+	// Configure the local strategy for use by Passport.
+	//
+	// The local strategy require a `verify` function which receives the credentials
+	// (`username` and `password`) submitted by the user.  The function must verify
+	// that the password is correct and then invoke `cb` with a user object, which
+	// will be set at `req.user` in route handlers after authentication.
+	passport.use(new LocalStrategy(
+		function (username, password, cb) {
+			db.users.findByUsername(username, function (err, user) {
+				if (err) { return cb(err); }
+				if (!user) { return cb(null, false); }
+				if (user.password != password) { return cb(null, false); }
+				return cb(null, user);
+			});
+		}));
+
+
+	// Configure Passport authenticated session persistence.
+	//
+	// In order to restore authentication state across HTTP requests, Passport needs
+	// to serialize users into and deserialize users out of the session.  The
+	// typical implementation of this is as simple as supplying the user ID when
+	// serializing, and querying the user record by ID from the database when
+	// deserializing.
+	passport.serializeUser(function (user, cb) {
+		cb(null, user.id);
+	});
+
+	passport.deserializeUser(function (id, cb) {
+		db.users.findById(id, function (err, user) {
+			if (err) { return cb(err); }
+			cb(null, user);
+		});
+	});
+	
+	app.use(passport.initialize());
+	app.use(passport.session());
+
+	// Define routes.
+	app.get('/auth/login',
+		(req, res) => {
+			//logger.warn('login  %o',req.query.state);
+			//logger.warn('login  %o',req.query);
+			//const state = JSON.parse(base64.decode(req.query.state));
+			const { peerId, roomId } = req.query;
+			res.render('login',{peerId:peerId,roomId:roomId});
+		});
+
+	app.post('/auth/login',
+		passport.authenticate('local', { failureRedirect: '/auth/login' }),
+		async (req, res,next) => {
+			try
+			{	
+				/*
+				const peerId = req.body.peerId;
+				const roomId = req.body.roomId;
+
+				req.session.peerId = peerId;
+				req.session.roomId = roomId;
+
+				let peer = peers.get(peerId);
+
+				if (!peer) // User has no socket session yet, make temporary
+					peer = new Peer({ id: peerId, roomId });
+
+				if (peer.roomId !== roomId) // The peer is mischievous
+					throw new Error('peer authenticated with wrong room');
+
+				//logger.info('[login user: "%o"]', req.user);
+				//logger.info('-----------------------------');
+				//logger.info('[peer: "%o"]', peer);
+				//logger.info('-----------------------------');
+				
+
+				let _userinfo = {};
+				_userinfo.name = req.user.username;
+				if (req.user.emails.length > 0)
+					_userinfo.email = req.user.emails[0].value;
+				_userinfo.picture=null;
+
+				if (typeof config.userMapping === 'function')
+				{
+					await config.userMapping({
+						peer,
+						roomId,
+						userinfo : _userinfo
+					});
+				}*/
+
+				//peer.authenticated = true;
+
+				//logger.info('[peer update: "%o"]', peer);
+				//logger.info('-----------------------------');
+
+				res.send(loginHelper({
+					displayName : req.user.username,
+					picture     : null
+				}));
+			}
+			catch (error)
+			{
+				return next(error);
+			}
+		});
+}
+
 async function setupAuth()
 {
 	// LTI
@@ -417,7 +535,7 @@ async function runHttpsServer()
 
 	app.use('/.well-known/acme-challenge', express.static('public/.well-known/acme-challenge'));
 
-	app.all('*', async (req, res, next) =>
+	/*app.all('*', async (req, res, next) =>
 	{
 		if (req.secure || config.httpOnly)
 		{
@@ -451,7 +569,7 @@ async function runHttpsServer()
 		else
 			res.redirect(`https://${req.hostname}${req.url}`);
 
-	});
+	});*/
 
 	// Serve all files in the public folder as static files.
 	app.use(express.static('public'));
@@ -521,6 +639,9 @@ async function runWebSocketServer()
 	// Handle connections from clients.
 	io.on('connection', (socket) =>
 	{
+		logger.info('on connection, query:"%o"', socket.handshake.query);
+		logger.info('on connection, session:"%o"', socket.handshake.session);
+
 		const { roomId, peerId } = socket.handshake.query;
 
 		if (!roomId || !peerId)
@@ -539,7 +660,23 @@ async function runWebSocketServer()
 		{
 			const { token } = socket.handshake.session;
 
-			const room = await getOrCreateRoom({ roomId });
+			let room;
+			if (
+				Boolean(socket.handshake.session.passport) &&
+				Boolean(socket.handshake.session.passport.user)
+			) {
+				room = await getOrCreateRoom({ roomId });
+			}
+			else {
+				room = await getOrCreateRoom({ roomId });
+				if (!room) {
+					logger.error('room "%s" is not exist!', roomId);
+					if (socket)
+						socket.disconnect(true);
+					return;
+				}
+			}
+
 
 			let peer = peers.get(peerId);
 			let returning = false;
@@ -574,23 +711,29 @@ async function runWebSocketServer()
 				Boolean(socket.handshake.session.passport.user)
 			)
 			{
+				logger.info('socket.handshake.session.passport: "%o"',socket.handshake.session.passport);
+				logger.info('socket.handshake.session.passport.user: "%o"',socket.handshake.session.passport.user);
+
+				const user = await db.users.getById(socket.handshake.session.passport.user);
+				logger.info('user: "%o"',user);
+				/*
 				const {
 					id,
 					displayName,
 					picture,
 					email,
 					_userinfo
-				} = socket.handshake.session.passport.user;
+				} = socket.handshake.session.passport.user;*/
 
-				peer.authId = id;
-				peer.displayName = displayName;
-				peer.picture = picture;
-				peer.email = email;
+				peer.authId = user.id;
+				peer.displayName = user.displayName;
+				peer.picture = null;
+				peer.email = user.emails[0];
 				peer.authenticated = true;
 
 				if (typeof config.userMapping === 'function')
 				{
-					await config.userMapping({ peer, roomId, userinfo: _userinfo });
+					await config.userMapping({ peer, roomId, userinfo: null });
 				}
 			}
 
@@ -669,6 +812,12 @@ async function getOrCreateRoom({ roomId })
 		});
 	}
 
+	return room;
+}
+
+async function getRoom({ roomId })
+{
+	let room = rooms.get(roomId);
 	return room;
 }
 
