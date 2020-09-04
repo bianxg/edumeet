@@ -518,8 +518,10 @@ export default class RoomClient
 		store.dispatch(settingsActions.setDisplayName(displayName));
 		store.dispatch(meActions.setPicture(picture));
 
+		
 		store.dispatch(meActions.loggedIn(true));
 
+		
 		store.dispatch(requestActions.notify(
 			{
 				text : intl.formatMessage({
