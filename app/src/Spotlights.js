@@ -214,7 +214,7 @@ export default class Spotlights extends EventEmitter
 
 	handleActiveSpeaker(peerId)
 	{
-		logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
+		//logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
 
 		const index = this._peerList.indexOf(peerId);
 
@@ -251,8 +251,9 @@ export default class Spotlights extends EventEmitter
 			this._currentSpotlights = spotlights.slice(0, this._maxSpotlights);
 			this.emit('spotlights-updated', this._currentSpotlights);
 		}
-		else
-			logger.debug('_spotlightsUpdated() | spotlights not updated');
+		else{
+			//logger.debug('_spotlightsUpdated() | spotlights not updated');
+		}
 	}
 
 	_arraysEqual(arr1, arr2)
