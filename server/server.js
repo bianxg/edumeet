@@ -415,6 +415,23 @@ async function setupLocalAuth()
 				return next(error);
 			}
 		});
+	// logout
+	app.get('/auth/logout',
+		(req, res) => {
+			const { peerId } = req.session;
+
+			const peer = peers.get(peerId);
+
+			if (peer) {
+				for (const role of peer.roles) {
+					if (role !== userRoles.NORMAL)
+						peer.removeRole(role);
+				}
+			}
+
+			req.logout();
+			req.session.destroy(() => res.send(logoutHelper()));
+		});
 }
 
 async function setupAuth()
