@@ -496,6 +496,12 @@ export default class RoomClient
 				}));
 		});
 	}
+	logcheck(roomId = this._roomId)
+	{
+		const url = `/auth/logcheck?peerId=${this._peerId}&roomId=${roomId}`;
+
+		window.open(url, 'logcheckWindow');
+	}
 
 	login(roomId = this._roomId)
 	{
@@ -509,9 +515,16 @@ export default class RoomClient
 		window.open(`/auth/logout?peerId=${this._peerId}&roomId=${roomId}`, 'logoutWindow');
 	}
 
+	receiveLogcheckChildWindow(data)
+	{
+		logger.debug('receiveLogcheckChildWindow() | [data:"%o"]', data);
+		const { loggedIn } = data;
+		store.dispatch(meActions.loggedIn(loggedIn));
+	}
+
 	receiveLoginChildWindow(data)
 	{
-		logger.debug('receiveFromChildWindow() | [data:"%o"]', data);
+		logger.debug('receiveLoginChildWindow() | [data:"%o"]', data);
 
 		const { displayName, picture } = data;
 

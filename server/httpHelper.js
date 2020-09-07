@@ -39,3 +39,25 @@ exports.logoutHelper = function()
 
 	return html;
 };
+
+exports.logcheckHelper = function(data)
+{
+	const html = `<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset='utf-8'>
+			<title>Multiparty Meeting</title>
+		</head>
+		<body>
+			<script type='text/javascript'>
+				let data = ${JSON.stringify(data)};
+	
+				window.opener.CLIENT.receiveLogcheckChildWindow(data);
+	
+				window.close();
+			</script>
+		</body>
+	</html>`;
+
+	return html;
+};

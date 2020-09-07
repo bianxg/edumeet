@@ -21,7 +21,8 @@ const helmet = require('helmet');
 const userRoles = require('./userRoles');
 const {
 	loginHelper,
-	logoutHelper
+	logoutHelper,
+	logcheckHelper
 } = require('./httpHelper');
 // auth
 const passport = require('passport');
@@ -431,6 +432,20 @@ async function setupLocalAuth()
 
 			req.logout();
 			req.session.destroy(() => res.send(logoutHelper()));
+		});
+	
+	// logcheck
+	app.get('/auth/logcheck',
+		(req, res) => {
+			let authenticated = false;
+			logger.info('session: "%o"', req.session);
+			if(req.session.passport && req.session.passport.user){
+				authenticated = true;
+			}
+			
+			res.send(logcheckHelper({
+				loggedIn: authenticated
+			}));
 		});
 }
 
