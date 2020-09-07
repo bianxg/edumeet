@@ -2284,9 +2284,11 @@ export default class RoomClient
 
 		this._signalingSocket.on('notification', async (notification) =>
 		{
+			if (!(notification.method==='activeSpeaker')) {
 			logger.debug(
 				'socket "notification" event [method:"%s", data:"%o"]',
 				notification.method, notification.data);
+			}
 
 			try
 			{
