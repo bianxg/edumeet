@@ -192,7 +192,7 @@ const JoinDialog = ({
 {
 	const intl = useIntl();
 
-	roomClient.logcheck(roomId);
+	//roomClient.logcheck(roomId);
 
 	const handleKeyDown = (event) =>
 	{
