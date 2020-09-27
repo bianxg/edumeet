@@ -95,7 +95,9 @@ class Room extends EventEmitter
 			{
 				maxEntries : 1,
 				threshold  : -80,
-				interval   : 800
+				//test
+				//interval   : 800
+				interval   : 2800
 			});
 
 		firstRouter = null;

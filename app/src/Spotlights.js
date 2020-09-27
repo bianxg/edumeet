@@ -227,6 +227,12 @@ export default class Spotlights extends EventEmitter
 		}
 	}
 
+	// test
+	spotlightsUpdated() {
+		logger.debug('_spotlightsUpdated() | spotlights updated, emitting');
+		this.emit('spotlights-updated', this._currentSpotlights);
+	}
+
 	_spotlightsUpdated()
 	{
 		let spotlights;

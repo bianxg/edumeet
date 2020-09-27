@@ -343,6 +343,8 @@ export default class RoomClient
 									defaultMessage : 'Changed layout to democratic view'
 								})
 							}));
+						// test
+						this._spotlights.spotlightsUpdated();
 						break;
 					}
 
@@ -356,6 +358,8 @@ export default class RoomClient
 									defaultMessage : 'Changed layout to filmstrip view'
 								})
 							}));
+						// test
+						this._spotlights.spotlightsUpdated();
 						break;
 					}
 
@@ -1025,6 +1029,7 @@ export default class RoomClient
 	}
 
 	// Updated consumers based on spotlights
+	/*
 	async updateSpotlights(spotlights)
 	{
 		logger.debug('updateSpotlights()');
@@ -1039,6 +1044,58 @@ export default class RoomClient
 						await this._resumeConsumer(consumer);
 					else
 						await this._pauseConsumer(consumer);
+				}
+			}
+		}
+		catch (error)
+		{
+			logger.error('updateSpotlights() [error:"%o"]', error);
+		}
+	}*/
+	// test
+	getActivePeerId()
+	{
+		if(store.getState().room.selectedPeerId){
+			return store.getState().room.selectedPeerId;
+		}
+		if(store.getState().room.activeSpeakerId){
+			return store.getState().room.activeSpeakerId;
+		}
+		const peerIds = Object.keys(store.getState().peers);
+
+		if (peerIds.length > 0)
+		{
+			return peerIds[0];
+		}
+	}
+	async updateSpotlights(spotlights)
+	{
+		logger.debug('updateSpotlights()');
+
+		try
+		{
+			for (const consumer of this._consumers.values())
+			{
+				if (consumer.kind === 'video')
+				{
+					if (spotlights.includes(consumer.appData.peerId)) {
+						await this._resumeConsumer(consumer);
+						if (store.getState().room.mode === 'filmstrip') {
+							const activePeerId = this.getActivePeerId();
+							if (activePeerId && activePeerId === consumer.appData.peerId) {
+								await this.setConsumerPreferredLayers(consumer.id, 2);
+							}
+							else {
+								await this.setConsumerPreferredLayers(consumer.id, 0);
+							}
+						}
+						else {
+							await this.setConsumerPreferredLayers(consumer.id, 1);
+						}
+					}
+					else{
+						await this._pauseConsumer(consumer);
+					}
 				}
 			}
 		}
@@ -1943,6 +2000,25 @@ export default class RoomClient
 		}
 	}
 
+	// test
+	/*
+	async setPreferredLayers(peerId, spatialLayer, temporalLayer) {
+		logger.debug(
+			'setPreferredLayers() [perrId:"%s", spatialLayer:"%s", temporalLayer:"%s"]',
+			peerId, spatialLayer, temporalLayer);
+
+		try {
+			for (const consumer of this._consumers.values()) {
+				if (consumer.appData.peerId === peerId && consumer.appData.source === 'webcam') {
+					await this.setConsumerPreferredLayers(consumer.id, spatialLayer, temporalLayer);
+				}
+			}
+		}
+		catch (error) {
+			logger.error('setConsumerPreferredLayers() [error:"%o"]', error);
+		}
+	}*/
+
 	async setConsumerPreferredLayers(consumerId, spatialLayer, temporalLayer)
 	{
 		logger.debug(
@@ -2565,7 +2641,6 @@ export default class RoomClient
 
 						if (peerId && peerId !== this._peerId)
 							this._spotlights.handleActiveSpeaker(peerId);
-
 						break;
 					}
 
