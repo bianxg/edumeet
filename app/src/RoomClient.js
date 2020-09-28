@@ -2347,6 +2347,10 @@ export default class RoomClient
 							}
 						});
 					}
+					// test(hack)
+					if (kind === 'video') {
+						this._spotlights.spotlightsUpdated();
+					}
 
 					break;
 				}
