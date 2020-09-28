@@ -183,7 +183,7 @@ export default class Spotlights extends EventEmitter
 			logger.debug('_handlePeer() | adding peer [peerId: "%s"]', id);
 
 			this._peerList.push(id);
-			this._unmutablePeerList.push(id);
+			this._unmutablePeerList.push(id);			
 
 			if (this._started)
 				this._spotlightsUpdated();
@@ -202,10 +202,17 @@ export default class Spotlights extends EventEmitter
 
 		if (this._started)
 			this._spotlightsUpdated();
+
+		if(this._activeSpeakerId && this._activeSpeakerId===id){
+			this._activeSpeakerId=null;
+		}
 	}
 
 	addSpeakerList(speakerList)
 	{
+		logger.debug(
+			'addSpeakerList %d', speakerList.length);
+
 		this._peerList = [ ...new Set([ ...speakerList, ...this._peerList ]) ];
 
 		if (this._started)
@@ -214,8 +221,8 @@ export default class Spotlights extends EventEmitter
 
 	handleActiveSpeaker(peerId)
 	{
-		//logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
-
+		logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
+		
 		const index = this._peerList.indexOf(peerId);
 
 		if (index > -1)
@@ -229,7 +236,7 @@ export default class Spotlights extends EventEmitter
 
 	// test
 	spotlightsUpdated() {
-		logger.debug('_spotlightsUpdated() | spotlights updated, emitting');
+		logger.debug('spotlightsUpdated() | spotlights updated, emitting');
 		this.emit('spotlights-updated', this._currentSpotlights);
 	}
 

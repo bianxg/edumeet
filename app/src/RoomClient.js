@@ -258,6 +258,10 @@ export default class RoomClient
 
 		this._screenSharingProducer = null;
 
+		// 
+		this._activeSpeakerId=null;
+		this._lastActiveSpeakerTime=0;
+
 		this._startKeyListener();
 
 		this._startDevicesListener();
@@ -1053,6 +1057,7 @@ export default class RoomClient
 		}
 	}*/
 	// test
+	/*
 	getActivePeerId()
 	{
 		if(store.getState().room.selectedPeerId){
@@ -1066,41 +1071,45 @@ export default class RoomClient
 		if (peerIds.length > 0)
 		{
 			return peerIds[0];
-		}
-	}
+		}		
+	}*/
 	async updateSpotlights(spotlights)
 	{
 		logger.debug('updateSpotlights()');
 
-		try
-		{
-			for (const consumer of this._consumers.values())
-			{
-				if (consumer.kind === 'video')
-				{
+		try {
+			for (const consumer of this._consumers.values()) {
+				if (consumer.kind === 'video') {
 					if (spotlights.includes(consumer.appData.peerId)) {
 						await this._resumeConsumer(consumer);
-						if (store.getState().room.mode === 'filmstrip') {
-							const activePeerId = this.getActivePeerId();
-							if (activePeerId && activePeerId === consumer.appData.peerId) {
-								await this.setConsumerPreferredLayers(consumer.id, 2);
-							}
-							else {
-								await this.setConsumerPreferredLayers(consumer.id, 0);
-							}
-						}
-						else {
-							await this.setConsumerPreferredLayers(consumer.id, 1);
-						}
 					}
-					else{
+					else {
 						await this._pauseConsumer(consumer);
 					}
 				}
 			}
+
+			let activePeerId;
+			if (spotlights.length > 0)
+				activePeerId = spotlights[0];
+			logger.debug('activePeerId: %s', activePeerId);
+			for (const consumer of this._consumers.values()) {
+				if (spotlights.includes(consumer.appData.peerId)) {
+					if (store.getState().room.mode === 'filmstrip') {
+						if (activePeerId && activePeerId === consumer.appData.peerId) {
+							await this.setConsumerPreferredLayers(consumer.id, 2);
+						}
+						else {
+							await this.setConsumerPreferredLayers(consumer.id, 0);
+						}
+					}
+					else {
+						await this.setConsumerPreferredLayers(consumer.id, 1);
+					}
+				}
+			}
 		}
-		catch (error)
-		{
+		catch (error) {
 			logger.error('updateSpotlights() [error:"%o"]', error);
 		}
 	}
@@ -1594,10 +1603,14 @@ export default class RoomClient
 	{
 		logger.debug('setSelectedPeer() [peerId:"%s"]', peerId);
 
-		this._spotlights.setPeerSpotlight(peerId);
+		// test
+		//this._spotlights.setPeerSpotlight(peerId);
 
 		store.dispatch(
 			roomActions.setSelectedPeer(peerId));
+		
+		// test 
+		this._spotlights.setPeerSpotlight(peerId);
 	}
 
 	async promoteAllLobbyPeers()
@@ -2638,7 +2651,25 @@ export default class RoomClient
 
 					case 'activeSpeaker':
 					{
-						const { peerId } = notification.data;
+						const { peerId } = notification.data;						
+						if (peerId && peerId !== this._peerId) {
+							let now = Date.now();
+							if (!this._activeSpeakerId) {
+								this._activeSpeakerId = peerId;
+								this._lastActiveSpeakerTime = now;
+							}
+							else {
+								if (this._activeSpeakerId === peerId) {
+									this._lastActiveSpeakerTime = now;
+									return;
+								}
+								if (now - this._lastActiveSpeakerTime < 10000) {
+									return;
+								}
+								this._lastActiveSpeakerTime = now;
+								this._activeSpeakerId = peerId;
+							}
+						}					
 
 						store.dispatch(
 							roomActions.setRoomActiveSpeaker(peerId));
@@ -2858,6 +2889,10 @@ export default class RoomClient
 
 						if (!consumer)
 							break;
+
+						// test
+						if(consumer.kind==='video')
+							this._spotlights.spotlightsUpdated();	
 
 						consumer.close();
 
