@@ -1094,7 +1094,7 @@ export default class RoomClient
 				activePeerId = spotlights[0];
 			logger.debug('activePeerId: %s', activePeerId);
 			for (const consumer of this._consumers.values()) {
-				if (spotlights.includes(consumer.appData.peerId)) {
+				if (consumer.kind === 'video' && spotlights.includes(consumer.appData.peerId)) {
 					if (store.getState().room.mode === 'filmstrip') {
 						if (activePeerId && activePeerId === consumer.appData.peerId) {
 							await this.setConsumerPreferredLayers(consumer.id, 2);
