@@ -1056,7 +1056,7 @@ export default class RoomClient
 			logger.error('updateSpotlights() [error:"%o"]', error);
 		}
 	}*/
-	// test
+	// test	
 	/*
 	getActivePeerId()
 	{
@@ -1089,22 +1089,23 @@ export default class RoomClient
 				}
 			}
 
+			//const activePeerId = this.getActivePeerId();
 			let activePeerId;
 			if (spotlights.length > 0)
-				activePeerId = spotlights[0];
-			logger.debug('activePeerId: %s', activePeerId);
+				activePeerId = spotlights[0];			
+			logger.debug('updateSpotlights() activePeerId: %s', activePeerId);
 			for (const consumer of this._consumers.values()) {
 				if (consumer.kind === 'video' && spotlights.includes(consumer.appData.peerId)) {
 					if (store.getState().room.mode === 'filmstrip') {
 						if (activePeerId && activePeerId === consumer.appData.peerId) {
-							await this.setConsumerPreferredLayers(consumer.id, 2);
+							await this.setConsumerPreferredLayers(consumer.appData.peerId,consumer.id, 2);
 						}
 						else {
-							await this.setConsumerPreferredLayers(consumer.id, 0);
+							await this.setConsumerPreferredLayers(consumer.appData.peerId,consumer.id, 0);
 						}
 					}
 					else {
-						await this.setConsumerPreferredLayers(consumer.id, 1);
+						await this.setConsumerPreferredLayers(consumer.appData.peerId,consumer.id, 1);
 					}
 				}
 			}
@@ -2032,11 +2033,11 @@ export default class RoomClient
 		}
 	}*/
 
-	async setConsumerPreferredLayers(consumerId, spatialLayer, temporalLayer)
+	async setConsumerPreferredLayers(peerId,consumerId, spatialLayer, temporalLayer)
 	{
 		logger.debug(
-			'setConsumerPreferredLayers() [consumerId:"%s", spatialLayer:"%s", temporalLayer:"%s"]',
-			consumerId, spatialLayer, temporalLayer);
+			'setConsumerPreferredLayers() [peerId: "%s", consumerId:"%s", spatialLayer:"%s", temporalLayer:"%s"]',
+			peerId, consumerId, spatialLayer, temporalLayer);
 
 		try
 		{
@@ -2651,31 +2652,34 @@ export default class RoomClient
 
 					case 'activeSpeaker':
 					{
-						const { peerId } = notification.data;						
-						if (peerId && peerId !== this._peerId) {
-							let now = Date.now();
-							if (!this._activeSpeakerId) {
-								this._activeSpeakerId = peerId;
-								this._lastActiveSpeakerTime = now;
-							}
-							else {
-								if (this._activeSpeakerId === peerId) {
+						const { peerId } = notification.data;	
+						if (!peerId || peerId === this._peerId)
+							return;
+						if (store.getState().room.mode === 'filmstrip') {
+							if (peerId && peerId !== this._peerId) {
+								let now = Date.now();
+								if (!this._activeSpeakerId) {
+									this._activeSpeakerId = peerId;
 									this._lastActiveSpeakerTime = now;
-									return;
 								}
-								if (now - this._lastActiveSpeakerTime < 10000) {
-									return;
+								else {
+									if (this._activeSpeakerId === peerId) {
+										this._lastActiveSpeakerTime = now;
+										return;
+									}
+									if (now - this._lastActiveSpeakerTime < 10000) {
+										return;
+									}
+									this._lastActiveSpeakerTime = now;
+									this._activeSpeakerId = peerId;
 								}
-								this._lastActiveSpeakerTime = now;
-								this._activeSpeakerId = peerId;
 							}
-						}					
-
+						}
 						store.dispatch(
 							roomActions.setRoomActiveSpeaker(peerId));
 
-						if (peerId && peerId !== this._peerId)
-							this._spotlights.handleActiveSpeaker(peerId);
+						//if (peerId && peerId !== this._peerId)
+						this._spotlights.handleActiveSpeaker(peerId);
 						break;
 					}
 
