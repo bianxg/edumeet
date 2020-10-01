@@ -288,8 +288,7 @@ const JoinDialog = ({
 							<Switch 
 								checked={audioMuted} 
 						    	onChange={(event) => {
-									onToggleAudioMute();
-									roomClient.changeAudioMute(event.target.checked);
+									onToggleAudioMute();									
 									}
 								} 
 							/>
@@ -317,6 +316,7 @@ const JoinDialog = ({
 					<DialogActions>
 						<Button
 							onClick={() => {
+								roomClient.changeAudioMute(audioMuted);
 								roomClient.join({ roomId, joinVideo: false });
 							}}
 							variant='contained'
@@ -329,6 +329,7 @@ const JoinDialog = ({
 						</Button>
 						<Button
 							onClick={() => {
+								roomClient.changeAudioMute(audioMuted);
 								roomClient.join({ roomId, joinVideo: true });
 							}}
 							variant='contained'
