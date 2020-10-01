@@ -51,6 +51,11 @@ export const toggleAdvancedMode = () =>
 		type : 'TOGGLE_ADVANCED_MODE'
 	});
 
+export const toggleAudioMute = () =>
+	({
+		type : 'TOGGLE_AUDIO_MUTE'
+	});	
+
 export const togglePermanentTopBar = () =>
 	({
 		type : 'TOGGLE_PERMANENT_TOPBAR'

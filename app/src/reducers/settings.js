@@ -25,6 +25,7 @@ const initialState =
 	notificationSounds      : true,
 	buttonControlBar        : window.config.buttonControlBar || false,
 	drawerOverlayed         : window.config.drawerOverlayed || true,
+	audioMuted              : false,
 	...window.config.defaultAudio
 };
 
@@ -32,6 +33,12 @@ const settings = (state = initialState, action) =>
 {
 	switch (action.type)
 	{
+		case 'TOGGLE_AUDIO_MUTE':
+		{
+			const audioMuted = !state.audioMuted;
+
+			return { ...state, audioMuted };
+		}
 		case 'CHANGE_WEBCAM':
 		{
 			return { ...state, selectedWebcam: action.payload.deviceId };

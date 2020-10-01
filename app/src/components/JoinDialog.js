@@ -21,88 +21,89 @@ import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
 
+//test
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+
 const styles = (theme) =>
 	({
-		root :
+		root:
 		{
-			display              : 'flex',
-			width                : '100%',
-			height               : '100%',
-			backgroundColor      : 'var(--background-color)',
-			backgroundImage      : `url(${window.config ? window.config.background : null})`,
-			backgroundAttachment : 'fixed',
-			backgroundPosition   : 'center',
-			backgroundSize       : 'cover',
-			backgroundRepeat     : 'no-repeat'
+			display: 'flex',
+			width: '100%',
+			height: '100%',
+			backgroundColor: 'var(--background-color)',
+			backgroundImage: `url(${window.config ? window.config.background : null})`,
+			backgroundAttachment: 'fixed',
+			backgroundPosition: 'center',
+			backgroundSize: 'cover',
+			backgroundRepeat: 'no-repeat'
 		},
-		dialogTitle :
+		dialogTitle:
 		{
 		},
-		dialogPaper :
+		dialogPaper:
 		{
-			width                          : '30vw',
-			padding                        : theme.spacing(2),
-			[theme.breakpoints.down('lg')] :
+			width: '30vw',
+			padding: theme.spacing(2),
+			[theme.breakpoints.down('lg')]:
 			{
-				width : '40vw'
+				width: '40vw'
 			},
-			[theme.breakpoints.down('md')] :
+			[theme.breakpoints.down('md')]:
 			{
-				width : '50vw'
+				width: '50vw'
 			},
-			[theme.breakpoints.down('sm')] :
+			[theme.breakpoints.down('sm')]:
 			{
-				width : '70vw'
+				width: '70vw'
 			},
-			[theme.breakpoints.down('xs')] :
+			[theme.breakpoints.down('xs')]:
 			{
-				width : '90vw'
+				width: '90vw'
 			}
 		},
-		logo :
+		logo:
 		{
-			display       : 'block',
-			paddingBottom : '1vh'
+			display: 'block',
+			paddingBottom: '1vh'
 		},
-		loginButton :
+		loginButton:
 		{
-			position : 'absolute',
-			right    : theme.spacing(2),
-			top      : theme.spacing(2),
-			padding  : 0
+			position: 'absolute',
+			right: theme.spacing(2),
+			top: theme.spacing(2),
+			padding: 0
 		},
-		largeIcon :
+		largeIcon:
 		{
-			fontSize : '2em'
+			fontSize: '2em'
 		},
-		largeAvatar :
+		largeAvatar:
 		{
-			width  : 50,
-			height : 50
+			width: 50,
+			height: 50
 		},
-		green :
+		green:
 		{
-			color : 'rgba(0, 153, 0, 1)'
+			color: 'rgba(0, 153, 0, 1)'
 		},
-		red :
+		red:
 		{
-			color : 'rgba(153, 0, 0, 1)'
+			color: 'rgba(153, 0, 0, 1)'
 		}
 	});
 
-const DialogTitle = withStyles(styles)((props) =>
-{
-	const [ open, setOpen ] = useState(false);
+const DialogTitle = withStyles(styles)((props) => {
+	const [open, setOpen] = useState(false);
 
 	const intl = useIntl();
 
-	useEffect(() =>
-	{
+	useEffect(() => {
 		const openTimer = setTimeout(() => setOpen(true), 1000);
 		const closeTimer = setTimeout(() => setOpen(false), 4000);
 
-		return () =>
-		{
+		return () => {
 			clearTimeout(openTimer);
 			clearTimeout(closeTimer);
 		};
@@ -110,30 +111,28 @@ const DialogTitle = withStyles(styles)((props) =>
 
 	const { children, classes, myPicture, onLogin, loggedIn, ...other } = props;
 
-	const handleTooltipClose = () =>
-	{
+	const handleTooltipClose = () => {
 		setOpen(false);
 	};
 
-	const handleTooltipOpen = () =>
-	{
+	const handleTooltipOpen = () => {
 		setOpen(true);
 	};
 
 	const loginTooltip = loggedIn ?
 		intl.formatMessage({
-			id             : 'tooltip.logout',
-			defaultMessage : 'Log out'
+			id: 'tooltip.logout',
+			defaultMessage: 'Log out'
 		})
 		:
 		intl.formatMessage({
-			id             : 'tooltip.login',
-			defaultMessage : 'Log in'
+			id: 'tooltip.login',
+			defaultMessage: 'Log in'
 		});
 
 	return (
 		<MuiDialogTitle disableTypography className={classes.dialogTitle} {...other}>
-			{ window.config.logo && <img alt='Logo' className={classes.logo} src={window.config.logo} /> }
+			{ window.config.logo && <img alt='Logo' className={classes.logo} src={window.config.logo} />}
 			<Typography variant='h5'>{children}</Typography>
 			{ window.config.loginEnabled &&
 				<Tooltip
@@ -149,7 +148,7 @@ const DialogTitle = withStyles(styles)((props) =>
 						color='inherit'
 						onClick={onLogin}
 					>
-						{ myPicture ?
+						{myPicture ?
 							<Avatar src={myPicture} className={classes.largeAvatar} />
 							:
 							<AccountCircle
@@ -164,17 +163,17 @@ const DialogTitle = withStyles(styles)((props) =>
 });
 
 const DialogContent = withStyles((theme) => ({
-	root :
+	root:
 	{
-		padding : theme.spacing(2)
+		padding: theme.spacing(2)
 	}
 }))(MuiDialogContent);
 
 const DialogActions = withStyles((theme) => ({
-	root :
+	root:
 	{
-		margin  : 0,
-		padding : theme.spacing(1)
+		margin: 0,
+		padding: theme.spacing(1)
 	}
 }))(MuiDialogActions);
 
@@ -187,28 +186,27 @@ const JoinDialog = ({
 	loggedIn,
 	myPicture,
 	changeDisplayName,
-	classes
-}) =>
-{
+	onToggleAudioMute,
+	classes,
+	audioMuted
+}) => {
 	const intl = useIntl();
 
 	//roomClient.logcheck(roomId);
 
-	const handleKeyDown = (event) =>
-	{
+	const handleKeyDown = (event) => {
 		const { key } = event;
 
-		switch (key)
-		{
+		switch (key) {
 			case 'Enter':
 			case 'Escape':
-			{
-				if (displayName === '')
-					changeDisplayName('Guest');
-				if (room.inLobby)
-					roomClient.changeDisplayName(displayName);
-				break;
-			}
+				{
+					if (displayName === '')
+						changeDisplayName('Guest');
+					if (room.inLobby)
+						roomClient.changeDisplayName(displayName);
+					break;
+				}
 			default:
 				break;
 		}
@@ -219,18 +217,17 @@ const JoinDialog = ({
 			<Dialog
 				open
 				classes={{
-					paper : classes.dialogPaper
+					paper: classes.dialogPaper
 				}}
 			>
 				<DialogTitle
 					myPicture={myPicture}
-					onLogin={() =>
-					{
+					onLogin={() => {
 						loggedIn ? roomClient.logout(roomId) : roomClient.login(roomId);
 					}}
 					loggedIn={loggedIn}
 				>
-					{ window.config.title ? window.config.title : 'Multiparty meeting' }
+					{window.config.title ? window.config.title : 'Multiparty meeting'}
 					<hr />
 				</DialogTitle>
 				<DialogContent>
@@ -246,7 +243,7 @@ const JoinDialog = ({
 							id='room.roomId'
 							defaultMessage='Room ID: {roomName}'
 							values={{
-								roomName : roomId
+								roomName: roomId
 							}}
 						/>
 					</DialogContentText>
@@ -264,28 +261,44 @@ const JoinDialog = ({
 					<TextField
 						id='displayname'
 						label={intl.formatMessage({
-							id             : 'label.yourName',
-							defaultMessage : 'Your name'
+							id: 'label.yourName',
+							defaultMessage: 'Your name'
 						})}
 						value={displayName}
 						variant='outlined'
 						margin='normal'
 						disabled={displayNameInProgress}
-						onChange={(event) =>
-						{
+						onChange={(event) => {
 							const { value } = event.target;
 
 							changeDisplayName(value);
 						}}
 						onKeyDown={handleKeyDown}
-						onBlur={() =>
-						{
+						onBlur={() => {
 							if (displayName === '')
 								changeDisplayName('Guest');
 							if (room.inLobby)
 								roomClient.changeDisplayName(displayName);
 						}}
 						fullWidth
+					/>
+					<FormControlLabel
+						className={classnames(classes.setting, classes.switchLabel)}
+						control={
+							<Switch 
+								checked={audioMuted} 
+						    	onChange={(event) => {
+									onToggleAudioMute();
+									roomClient.changeAudioMute(event.target.checked);
+									}
+								} 
+							/>
+						}
+						labelPlacement='start'
+						label={intl.formatMessage({
+							id: 'device.muteAudio',
+							defaultMessage: 'Mute audio'
+						})}
 					/>
 					{!room.inLobby && room.overRoomLimit &&
 						<DialogContentText className={classes.red} variant='h6' gutterBottom>
@@ -300,11 +313,10 @@ const JoinDialog = ({
 
 				</DialogContent>
 
-				{ !room.inLobby ?
+				{!room.inLobby ?
 					<DialogActions>
 						<Button
-							onClick={() =>
-							{
+							onClick={() => {
 								roomClient.join({ roomId, joinVideo: false });
 							}}
 							variant='contained'
@@ -316,8 +328,7 @@ const JoinDialog = ({
 							/>
 						</Button>
 						<Button
-							onClick={() =>
-							{
+							onClick={() => {
 								roomClient.join({ roomId, joinVideo: true });
 							}}
 							variant='contained'
@@ -343,7 +354,7 @@ const JoinDialog = ({
 								defaultMessage='Ok, you are ready'
 							/>
 						</DialogContentText>
-						{ room.signInRequired ?
+						{room.signInRequired ?
 							<DialogContentText
 								gutterBottom
 								variant='h5'
@@ -372,10 +383,10 @@ const JoinDialog = ({
 					</DialogContent>
 				}
 
-				{ !isElectron() &&
+				{!isElectron() &&
 					<CookieConsent buttonText={intl.formatMessage({
-						id             : 'room.consentUnderstand',
-						defaultMessage : 'I understand'
+						id: 'room.consentUnderstand',
+						defaultMessage: 'I understand'
 					})}
 					>
 						<FormattedMessage
@@ -391,36 +402,39 @@ const JoinDialog = ({
 
 JoinDialog.propTypes =
 {
-	roomClient            : PropTypes.any.isRequired,
-	room                  : PropTypes.object.isRequired,
-	roomId                : PropTypes.string.isRequired,
-	displayName           : PropTypes.string.isRequired,
-	displayNameInProgress : PropTypes.bool.isRequired,
-	loginEnabled          : PropTypes.bool.isRequired,
-	loggedIn              : PropTypes.bool.isRequired,
-	myPicture             : PropTypes.string,
-	changeDisplayName     : PropTypes.func.isRequired,
-	classes               : PropTypes.object.isRequired
+	roomClient: PropTypes.any.isRequired,
+	room: PropTypes.object.isRequired,
+	roomId: PropTypes.string.isRequired,
+	displayName: PropTypes.string.isRequired,
+	displayNameInProgress: PropTypes.bool.isRequired,
+	loginEnabled: PropTypes.bool.isRequired,
+	loggedIn: PropTypes.bool.isRequired,
+	myPicture: PropTypes.string,
+	changeDisplayName: PropTypes.func.isRequired,
+	onToggleAudioMute: PropTypes.func.isRequired,
+	classes: PropTypes.object.isRequired,
+	mute: PropTypes.bool.isRequired
 };
 
-const mapStateToProps = (state) =>
-{
+const mapStateToProps = (state) => {
 	return {
-		room                  : state.room,
-		displayName           : state.settings.displayName,
-		displayNameInProgress : state.me.displayNameInProgress,
-		loginEnabled          : state.me.loginEnabled,
-		loggedIn              : state.me.loggedIn,
-		myPicture             : state.me.picture
+		room: state.room,
+		displayName: state.settings.displayName,
+		displayNameInProgress: state.me.displayNameInProgress,
+		loginEnabled: state.me.loginEnabled,
+		loggedIn: state.me.loggedIn,
+		myPicture: state.me.picture,
+		audioMuted: state.settings.audioMuted
 	};
 };
 
-const mapDispatchToProps = (dispatch) =>
-{
+const mapDispatchToProps = (dispatch) => {
 	return {
-		changeDisplayName : (displayName) =>
-		{
+		changeDisplayName: (displayName) => {
 			dispatch(settingsActions.setDisplayName(displayName));
+		},
+		onToggleAudioMute: () => {
+			dispatch(settingsActions.toggleAudioMute());
 		}
 	};
 };
@@ -430,8 +444,7 @@ export default withRoomContext(connect(
 	mapDispatchToProps,
 	null,
 	{
-		areStatesEqual : (next, prev) =>
-		{
+		areStatesEqual: (next, prev) => {
 			return (
 				prev.room.inLobby === next.room.inLobby &&
 				prev.room.signInRequired === next.room.signInRequired &&
@@ -440,7 +453,8 @@ export default withRoomContext(connect(
 				prev.me.displayNameInProgress === next.me.displayNameInProgress &&
 				prev.me.loginEnabled === next.me.loginEnabled &&
 				prev.me.loggedIn === next.me.loggedIn &&
-				prev.me.picture === next.me.picture
+				prev.me.picture === next.me.picture &&
+				prev.settings.audioMuted === next.settings.audioMuted
 			);
 		}
 	}

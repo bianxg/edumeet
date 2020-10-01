@@ -699,6 +699,12 @@ export default class RoomClient
 		}
 	}
 
+	// test
+	changeAudioMute(muted)
+	{
+		this._muted = muted;
+	}
+
 	async changeDisplayName(displayName)
 	{
 		logger.debug('changeDisplayName() [displayName:"%s"]', displayName);
