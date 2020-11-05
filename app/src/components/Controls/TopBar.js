@@ -41,6 +41,8 @@ import Tooltip from '@material-ui/core/Tooltip';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import HelpIcon from '@material-ui/icons/Help';
 import InfoIcon from '@material-ui/icons/Info';
+import GridOnIcon from '@material-ui/icons/GridOn';
+import GridOffIcon from '@material-ui/icons/GridOff';
 
 const styles = (theme) =>
 	({
@@ -223,6 +225,7 @@ const TopBar = (props) =>
 		fullscreenEnabled,
 		fullscreen,
 		onFullscreen,
+		setDisplayMode,
 		setSettingsOpen,
 		setExtraVideoOpen,
 		setHelpOpen,
@@ -239,6 +242,17 @@ const TopBar = (props) =>
 
 	const isMenuOpen = Boolean(anchorEl);
 	const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+
+	const layoutToolip = room.mode === 'democratic' ?
+		intl.formatMessage({
+			id: 'label.filmstrip',
+			defaultMessage: 'Filmstrip view'
+		})
+		:
+		intl.formatMessage({
+			id: 'label.democratic',
+			defaultMessage: 'Democratic view'
+		});
 
 	const lockTooltip = room.locked ?
 		intl.formatMessage({
@@ -329,6 +343,20 @@ const TopBar = (props) =>
 								color='inherit'
 							>
 								<ExtensionIcon />
+							</IconButton>
+						</Tooltip>
+						<Tooltip
+							title={layoutToolip}>
+							<IconButton
+								aria-label={intl.formatMessage({
+									id             : 'tooltip.selectRoomLayout',
+									defaultMessage : 'Select room layout'
+								})}
+								className={classes.actionButton}
+								color='inherit'
+								onClick={() => setDisplayMode(room.mode === 'democratic' ? 'filmstrip':'democratic')}
+							>
+							{ room.mode === 'democratic' ? <GridOffIcon />:<GridOnIcon/>}
 							</IconButton>
 						</Tooltip>
 						{ fullscreenEnabled &&
@@ -783,6 +811,7 @@ TopBar.propTypes =
 	fullscreen           : PropTypes.bool,
 	onFullscreen         : PropTypes.func.isRequired,
 	setToolbarsVisible   : PropTypes.func.isRequired,
+	setDisplayMode       : PropTypes.func.isRequired,
 	setSettingsOpen      : PropTypes.func.isRequired,
 	setExtraVideoOpen    : PropTypes.func.isRequired,
 	setHelpOpen          : PropTypes.func.isRequired,
@@ -836,6 +865,10 @@ const mapDispatchToProps = (dispatch) =>
 		setToolbarsVisible : (visible) =>
 		{
 			dispatch(roomActions.setToolbarsVisible(visible));
+		}, 
+		setDisplayMode : (mode) =>
+		{
+			dispatch(roomActions.setDisplayMode(mode));
 		},
 		setSettingsOpen : (settingsOpen) =>
 		{
