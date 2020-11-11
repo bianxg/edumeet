@@ -90,7 +90,8 @@ export default class Spotlights
 
 	handleActiveSpeaker(peerId)
 	{
-		logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
+		// bxg: Reduce log
+		// logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
 
 		const index = this._peerList.indexOf(peerId);
 
@@ -133,7 +134,8 @@ export default class Spotlights
 		}
 		else
 		{
-			logger.debug('_spotlightsUpdated() | spotlights not updated');
+			// bxg: Reduce log
+			// logger.debug('_spotlightsUpdated() | spotlights not updated');
 		}
 	}
 

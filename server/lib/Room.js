@@ -752,9 +752,12 @@ class Room extends EventEmitter
 
 		peer.socket.on('request', (request, cb) =>
 		{
-			logger.debug(
-				'Peer "request" event [method:"%s", peerId:"%s"]',
-				request.method, peer.id);
+			// bxg: reduce log
+			if (!(request.method === "getTransportStats")) {
+				logger.debug(
+					'Peer "request" event [method:"%s", peerId:"%s"]',
+					request.method, peer.id);
+			}
 
 			this._handleSocketRequest(peer, request, cb)
 				.catch((error) =>

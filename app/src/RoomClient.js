@@ -346,6 +346,7 @@ export default class RoomClient
 									defaultMessage : 'Changed layout to democratic view'
 								})
 							}));
+						this.updatePreferLayer();
 						break;
 					}
 
@@ -359,6 +360,7 @@ export default class RoomClient
 									defaultMessage : 'Changed layout to filmstrip view'
 								})
 							}));
+						this.updatePreferLayer();
 						break;
 					}
 
@@ -648,7 +650,7 @@ export default class RoomClient
 		{
 			if (this._recvTransport)
 			{
-				logger.debug('getTransportStats() - recv [transportId: "%s"]', this._recvTransport.id);
+				// logger.debug('getTransportStats() - recv [transportId: "%s"]', this._recvTransport.id);
 
 				const recv = await this.sendRequest('getTransportStats', { transportId: this._recvTransport.id });
 
@@ -658,7 +660,7 @@ export default class RoomClient
 
 			if (this._sendTransport)
 			{
-				logger.debug('getTransportStats() - send [transportId: "%s"]', this._sendTransport.id);
+				// logger.debug('getTransportStats() - send [transportId: "%s"]', this._sendTransport.id);
 
 				const send = await this.sendRequest('getTransportStats', { transportId: this._sendTransport.id });
 
@@ -674,7 +676,11 @@ export default class RoomClient
 
 	async sendRequest(method, data)
 	{
-		logger.debug('sendRequest() [method:"%s", data:"%o"]', method, data);
+		// bxg: reduce log
+		if (method !== 'getTransportStats')
+		{
+			logger.debug('sendRequest() [method:"%s", data:"%o"]', method, data);
+		}
 
 		const {
 			requestRetries = 3
@@ -1042,6 +1048,47 @@ export default class RoomClient
 			settingsActions.setLastN(maxSpotlights));
 	}
 
+	// Update prefered layer based on spotlights and room mode
+	async updatePreferLayer()
+	{
+		// logger.debug('updatePreferLayer()');
+
+		try
+		{
+			// Prefer layer according room mode
+			let activePeerId;
+
+			if (this._spotlights._currentSpotlights.length > 0)
+				activePeerId = this._spotlights._currentSpotlights[0];
+			logger.debug('updatePreferLayer() activePeerId: %s', activePeerId);
+			for (const consumer of this._consumers.values())
+			{
+				if (consumer.kind === 'video' && this._spotlights.peerInSpotlights(consumer.appData.peerId))
+				{
+					if (store.getState().room.mode === 'filmstrip')
+					{
+						if (activePeerId && activePeerId === consumer.appData.peerId)
+						{
+							await this.setConsumerPreferredLayers(consumer.id, 2);
+						}
+						else
+						{
+							await this.setConsumerPreferredLayers(consumer.id, 0);
+						}
+					}
+					else
+					{
+						await this.setConsumerPreferredLayers(consumer.id, 1);
+					}
+				}
+			}
+		}
+		catch (error)
+		{
+			logger.error('updatePreferLayer() [error:"%o"]', error);
+		}
+	}
+
 	// Updated consumers based on spotlights
 	async updateSpotlights(spotlights)
 	{
@@ -1065,6 +1112,7 @@ export default class RoomClient
 					}
 				}
 			}
+			await this.updatePreferLayer();
 		}
 		catch (error)
 		{
@@ -2388,9 +2436,12 @@ export default class RoomClient
 
 		this._signalingSocket.on('notification', async (notification) =>
 		{
-			logger.debug(
-				'socket "notification" event [method:"%s", data:"%o"]',
-				notification.method, notification.data);
+			// bxg: Reduce log
+			if (notification.method !== 'activeSpeaker')
+			{
+				logger.debug('socket "notification" event [method:"%s", data:"%o"]',
+					notification.method, notification.data);
+			}
 
 			try
 			{
