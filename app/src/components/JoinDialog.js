@@ -198,7 +198,9 @@ const JoinDialog = ({
 	{
 		if (mediaPerms.video || mediaPerms.audio)
 		{
-			navigator.mediaDevices.getUserMedia(mediaPerms);
+			// bxg: fix that camera resolution is still 640x480 
+			// when join room with 'high' resolution setting
+			// navigator.mediaDevices.getUserMedia(mediaPerms);
 		}
 	};
 
