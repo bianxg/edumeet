@@ -2421,7 +2421,9 @@ export default class RoomClient
 							}
 						});
 					}
-
+					// bxg: update prefer layer after newConsumer
+					if (kind === 'video')
+						this.updatePreferLayer();
 					break;
 				}
 
