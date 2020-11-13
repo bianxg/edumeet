@@ -489,7 +489,7 @@ const JoinDialog = ({
 						>
 
 							{/* MEDIA PERMISSIONS TOGGLE BUTTONS */}
-							{window.config.loginEnabled &&
+							{window.config.mediaEnabled &&
 							<Grid item>
 								<FormControl component='fieldset'>
 									<Box mb={1}>

@@ -1855,7 +1855,8 @@ class Room extends EventEmitter
 
 		consumer.on('score', (score) =>
 		{
-			this._notification(consumerPeer.socket, 'consumerScore', { consumerId: consumer.id, score });
+			// bxg: Reduce log
+			// this._notification(consumerPeer.socket, 'consumerScore', { consumerId: consumer.id, score });
 		});
 
 		consumer.on('layerschange', (layers) =>
