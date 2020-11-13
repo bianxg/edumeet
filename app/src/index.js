@@ -48,7 +48,7 @@ const supportedBrowsers={
 
 const intl = createIntl();
 
-if (process.env.REACT_APP_DEBUG === '*' || process.env.NODE_ENV !== 'production')
+// if (process.env.REACT_APP_DEBUG === '*' || process.env.NODE_ENV !== 'production')
 {
 	debug.enable('* -engine* -socket* -RIE* *WARN* *ERROR*');
 }
