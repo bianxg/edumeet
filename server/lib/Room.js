@@ -293,6 +293,9 @@ class Room extends EventEmitter
 
 		this._handleLobby();
 		this._handleAudioLevelObserver();
+
+		// Producer Ref (bianxg)
+		this._producersRef = new Map();
 	}
 
 	isLocked()
@@ -345,6 +348,9 @@ class Room extends EventEmitter
 		this._mediasoupRouters.clear();
 
 		this._audioLevelObserver = null;
+
+		// Producer Ref (bianxg)
+		this._producersRef = null;
 
 		// Emit 'close' event.
 		this.emit('close');
@@ -1046,10 +1052,15 @@ class Room extends EventEmitter
 
 				// Add peerId into appData to later get the associated Peer during
 				// the 'loudest' event of the audioLevelObserver.
-				appData = { ...appData, peerId: peer.id };
+				// appData = { ...appData, peerId: peer.id };
+				// bianxg
+				appData = { ...appData, peerId: peer.id, transportId: transportId};
 
 				const producer =
 					await transport.produce({ kind, rtpParameters, appData });
+
+				// bianxg
+				this._producersRef.set(producer.id,1);
 
 				const pipeRouters = this._getRoutersToPipeTo(peer.routerId);
 
@@ -1122,6 +1133,9 @@ class Room extends EventEmitter
 
 				cb();
 
+				// bianxg
+				this._producersRef.delete(producerId);
+
 				break;
 			}
 
@@ -1179,6 +1193,28 @@ class Room extends EventEmitter
 
 				cb();
 
+				// bianxg
+				const producerId = consumer.producerId;
+				let ref = this._producersRef.get(producerId);
+				ref = ref - 1;
+				this._producersRef.set(producerId,ref);
+				logger.info('producer "%s" kind: %s ref: %d', producerId, consumer.kind, ref);
+				if (ref === 0) {
+					const producerPeerId = consumer.appData.producerPeerId;
+					const producerPeer = this._peers[producerPeerId];
+					if (producerPeer) {
+						const producer = producerPeer.getProducer(producerId);
+						if (producer) {
+							const transport = producerPeer.getTransport(producer.appData.transportId);
+							if (transport) {								
+								const maxIncomingBitrate = 600000;
+								logger.info('producer "%s" setMaxIncomingBitrate %d', producerId,maxIncomingBitrate);
+								try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }
+								catch (error) { }
+							}
+						}
+					}
+				}
 				break;
 			}
 
@@ -1198,6 +1234,31 @@ class Room extends EventEmitter
 
 				cb();
 
+				// bianxg
+				const producerId = consumer.producerId;
+				let ref = this._producersRef.get(producerId);
+				ref = ref + 1;
+				this._producersRef.set(producerId,ref);
+				logger.info('producer "%s" kind: %s ref: %d', producerId, consumer.kind, ref);
+				if (ref === 1) {
+					const producerPeerId = consumer.appData.producerPeerId;
+					const producerPeer = this._peers[producerPeerId];
+					if (producerPeer) {
+						const producer = producerPeer.getProducer(producerId);
+						if (producer) {
+							const transport = producerPeer.getTransport(producer.appData.transportId);
+							if (transport) {								
+								const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
+								logger.info('producer "%s" setMaxIncomingBitrate %d', producerId,maxIncomingBitrate);
+								// If set, apply max incoming bitrate limit.
+								if (maxIncomingBitrate) {
+									try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }
+									catch (error) { }
+								}
+							}
+						}
+					}
+				}
 				break;
 			}
 
@@ -1806,13 +1867,17 @@ class Room extends EventEmitter
 		// Create the Consumer in paused mode.
 		let consumer;
 
+		// bianxg
+		let appData = { producerId: producer.id, producerPeerId: producerPeer.id };
+
 		try
 		{
 			consumer = await transport.consume(
 				{
 					producerId      : producer.id,
 					rtpCapabilities : consumerPeer.rtpCapabilities,
-					paused          : producer.kind === 'video'
+					paused          : producer.kind === 'video',
+					appData         : appData
 				});
 
 			if (producer.kind === 'audio')
