@@ -1203,7 +1203,8 @@ class Room extends EventEmitter
 					const producerPeerId = consumer.appData.producerPeerId;
 					const producerPeer = this._peers[producerPeerId];
 					if (producerPeer) {
-						const producer = producerPeer.getProducer(producerId);
+						this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerPeerId, kind: producer.kind });
+						/*const producer = producerPeer.getProducer(producerId);
 						if (producer) {
 							const transport = producerPeer.getTransport(producer.appData.transportId);
 							if (transport) {								
@@ -1212,7 +1213,7 @@ class Room extends EventEmitter
 								try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }
 								catch (error) { }
 							}
-						}
+						}*/
 					}
 				}
 				break;
@@ -1246,7 +1247,8 @@ class Room extends EventEmitter
 					if (producerPeer) {
 						const producer = producerPeer.getProducer(producerId);
 						if (producer) {
-							const transport = producerPeer.getTransport(producer.appData.transportId);
+							this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerPeerId, kind: producer.kind });
+							/*const transport = producerPeer.getTransport(producer.appData.transportId);
 							if (transport) {								
 								const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
 								logger.info('producer "%s" setMaxIncomingBitrate %d', producerId,maxIncomingBitrate);
@@ -1255,7 +1257,7 @@ class Room extends EventEmitter
 									try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }
 									catch (error) { }
 								}
-							}
+							}*/
 						}
 					}
 				}

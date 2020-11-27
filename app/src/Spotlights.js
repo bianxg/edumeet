@@ -127,7 +127,7 @@ export default class Spotlights
 		if (!this._arraysEqual(
 			this._currentSpotlights, spotlights.slice(0, maxSpotlights)))
 		{
-			logger.debug('_spotlightsUpdated() | spotlights updated, emitting');
+			logger.debug('_spotlightsUpdated(%s) | spotlights updated, emitting', JSON.stringify(spotlights.slice(0, maxSpotlights)));
 
 			this._currentSpotlights = spotlights.slice(0, maxSpotlights);
 			this._roomClient.updateSpotlights(this._currentSpotlights);

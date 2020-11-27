@@ -1052,7 +1052,6 @@ export default class RoomClient
 	async updatePreferLayer()
 	{
 		// logger.debug('updatePreferLayer()');
-
 		try
 		{
 			// Prefer layer according room mode
@@ -1060,24 +1059,30 @@ export default class RoomClient
 
 			if (this._spotlights._currentSpotlights.length > 0)
 				activePeerId = this._spotlights._currentSpotlights[0];
-			logger.debug('updatePreferLayer() activePeerId: %s', activePeerId);
 			for (const consumer of this._consumers.values())
 			{
 				if (consumer.kind === 'video' && this._spotlights.peerInSpotlights(consumer.appData.peerId))
 				{
 					if (store.getState().room.mode === 'filmstrip')
 					{
-						if (activePeerId && activePeerId === consumer.appData.peerId)
+						if (activePeerId && activePeerId === consumer.appData.peerId &&
+							consumer.appData.preferredSpatialLayer !== 2)
 						{
+							logger.debug('updatePreferLayer() consumer.id: %s preferredSpatialLayer: %d', consumer.id, 2);
+							consumer.appData.preferredSpatialLayer = 2;
 							await this.setConsumerPreferredLayers(consumer.id, 2);
 						}
-						else
+						else if (consumer.appData.preferredSpatialLayer !== 0)
 						{
+							logger.debug('updatePreferLayer() consumer.id: %s preferredSpatialLayer: %d', consumer.id, 0);
+							consumer.appData.preferredSpatialLayer = 0;
 							await this.setConsumerPreferredLayers(consumer.id, 0);
 						}
 					}
-					else
+					else if (consumer.appData.preferredSpatialLayer !== 1)
 					{
+						logger.debug('updatePreferLayer() consumer.id: %s preferredSpatialLayer: %d', consumer.id, 1);
+						consumer.appData.preferredSpatialLayer = 1;
 						await this.setConsumerPreferredLayers(consumer.id, 1);
 					}
 				}
@@ -1092,7 +1097,7 @@ export default class RoomClient
 	// Updated consumers based on spotlights
 	async updateSpotlights(spotlights)
 	{
-		logger.debug('updateSpotlights()');
+		// logger.debug('updateSpotlights()');
 
 		store.dispatch(roomActions.setSpotlights(spotlights));
 
@@ -1997,10 +2002,10 @@ export default class RoomClient
 
 	async _pauseConsumer(consumer)
 	{
-		logger.debug('_pauseConsumer() [consumer:"%o"]', consumer);
-
 		if (consumer.paused || consumer.closed)
 			return;
+
+		logger.debug('_pauseConsumer() [consumer:"%o"]', consumer);
 
 		try
 		{
@@ -2019,10 +2024,9 @@ export default class RoomClient
 
 	async _resumeConsumer(consumer)
 	{
-		logger.debug('_resumeConsumer() [consumer:"%o"]', consumer);
-
 		if (!consumer.paused || consumer.closed)
 			return;
+		logger.debug('_resumeConsumer() [consumer:"%o"]', consumer);
 
 		try
 		{
@@ -2423,7 +2427,10 @@ export default class RoomClient
 					}
 					// bxg: update prefer layer after newConsumer
 					if (kind === 'video')
+					{
+						consumer.appData.preferredSpatialLayer = spatialLayers - 1;
 						this.updatePreferLayer();
+					}
 					break;
 				}
 
@@ -3018,6 +3025,36 @@ export default class RoomClient
 									})
 								}));
 						}
+
+						break;
+					}
+					// bianxg
+					case 'router:pauseVideo':
+					{
+						this.disableWebcam();
+
+						store.dispatch(requestActions.notify(
+							{
+								text : intl.formatMessage({
+									id             : 'router.pauseVideo',
+									defaultMessage : 'No peer watch your video'
+								})
+							}));
+
+						break;
+					}
+
+					case 'router:resumeVideo':
+					{
+						this.updateWebcam({ start: true });
+
+						store.dispatch(requestActions.notify(
+							{
+								text : intl.formatMessage({
+									id             : 'router.resumeVideo',
+									defaultMessage : 'Peer watch your video'
+								})
+							}));
 
 						break;
 					}
