@@ -1453,7 +1453,8 @@ export default class RoomClient
 		restart = false,
 		newDeviceId = null,
 		newResolution = null,
-		newFrameRate = null
+		newFrameRate = null,
+		save = true
 	} = {})
 	{
 		logger.debug(
@@ -1478,7 +1479,7 @@ export default class RoomClient
 			if (newDeviceId)
 				store.dispatch(settingsActions.setSelectedWebcamDevice(newDeviceId));
 
-			if (newResolution)
+			if (newResolution && save)
 				store.dispatch(settingsActions.setVideoResolution(newResolution));
 
 			if (newFrameRate)
@@ -1499,10 +1500,16 @@ export default class RoomClient
 			if (!device)
 				throw new Error('no webcam devices');
 
-			const {
+			let {
 				resolution,
 				frameRate
 			} = store.getState().settings;
+
+			if (newResolution)
+				resolution = newResolution;
+
+			if (newFrameRate)
+				frameRate = newFrameRate;
 
 			if (
 				(restart && this._webcamProducer) ||
@@ -3031,7 +3038,7 @@ export default class RoomClient
 					// bianxg
 					case 'router:pauseVideo':
 					{
-						this.disableWebcam();
+						this.updateWebcam({ newResolution: 'low', save: false });
 
 						store.dispatch(requestActions.notify(
 							{
@@ -3046,7 +3053,9 @@ export default class RoomClient
 
 					case 'router:resumeVideo':
 					{
-						this.updateWebcam({ start: true });
+						const resolution = store.getState().settings.resolution;
+
+						this.updateWebcam({ newResolution: resolution, save: false });
 
 						store.dispatch(requestActions.notify(
 							{
