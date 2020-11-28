@@ -68,7 +68,8 @@ export default class Spotlights
 
 			this._peerList.push(id);
 
-			this._spotlightsUpdated();
+			// bianxg: call after newConsumer
+			// this._spotlightsUpdated();
 		}
 	}
 
@@ -91,13 +92,19 @@ export default class Spotlights
 	handleActiveSpeaker(peerId)
 	{
 		// bxg: Reduce log
-		// logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
+		logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
 
 		const index = this._peerList.indexOf(peerId);
 
 		if (index > -1)
 		{
 			this._peerList.splice(index, 1);
+			this._peerList = [ peerId ].concat(this._peerList);
+
+			this._spotlightsUpdated();
+		}
+		else
+		{
 			this._peerList = [ peerId ].concat(this._peerList);
 
 			this._spotlightsUpdated();
@@ -127,7 +134,7 @@ export default class Spotlights
 		if (!this._arraysEqual(
 			this._currentSpotlights, spotlights.slice(0, maxSpotlights)))
 		{
-			logger.debug('_spotlightsUpdated(%s) | spotlights updated, emitting', JSON.stringify(spotlights.slice(0, maxSpotlights)));
+			logger.debug('_spotlightsUpdated(%s) | spotlights updated, emitting %s', JSON.stringify(spotlights.slice(0, maxSpotlights)));
 
 			this._currentSpotlights = spotlights.slice(0, maxSpotlights);
 			this._roomClient.updateSpotlights(this._currentSpotlights);
@@ -135,7 +142,7 @@ export default class Spotlights
 		else
 		{
 			// bxg: Reduce log
-			// logger.debug('_spotlightsUpdated() | spotlights not updated');
+			logger.debug('_spotlightsUpdated() | spotlights not updated');
 		}
 	}
 

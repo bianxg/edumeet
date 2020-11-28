@@ -1060,7 +1060,7 @@ class Room extends EventEmitter
 					await transport.produce({ kind, rtpParameters, appData });
 
 				// bianxg
-				this._producersRef.set(producer.id,1);
+				this._producerRefInit(peer, producer);
 
 				const pipeRouters = this._getRoutersToPipeTo(peer.routerId);
 
@@ -1134,7 +1134,7 @@ class Room extends EventEmitter
 				cb();
 
 				// bianxg
-				this._producersRef.delete(producerId);
+				this._producerRefDeInit(producer);
 
 				break;
 			}
@@ -1194,28 +1194,7 @@ class Room extends EventEmitter
 				cb();
 
 				// bianxg
-				const producerId = consumer.producerId;
-				let ref = this._producersRef.get(producerId);
-				ref = ref - 1;
-				this._producersRef.set(producerId,ref);
-				logger.info('producer "%s" kind: %s ref: %d', producerId, consumer.kind, ref);
-				if (ref === 0) {
-					const producerPeerId = consumer.appData.producerPeerId;
-					const producerPeer = this._peers[producerPeerId];
-					if (producerPeer) {
-						this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerPeerId, kind: producer.kind });
-						/*const producer = producerPeer.getProducer(producerId);
-						if (producer) {
-							const transport = producerPeer.getTransport(producer.appData.transportId);
-							if (transport) {								
-								const maxIncomingBitrate = 600000;
-								logger.info('producer "%s" setMaxIncomingBitrate %d', producerId,maxIncomingBitrate);
-								try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }
-								catch (error) { }
-							}
-						}*/
-					}
-				}
+				this._producerUnRef(consumer);
 				break;
 			}
 
@@ -1236,31 +1215,7 @@ class Room extends EventEmitter
 				cb();
 
 				// bianxg
-				const producerId = consumer.producerId;
-				let ref = this._producersRef.get(producerId);
-				ref = ref + 1;
-				this._producersRef.set(producerId,ref);
-				logger.info('producer "%s" kind: %s ref: %d', producerId, consumer.kind, ref);
-				if (ref === 1) {
-					const producerPeerId = consumer.appData.producerPeerId;
-					const producerPeer = this._peers[producerPeerId];
-					if (producerPeer) {
-						const producer = producerPeer.getProducer(producerId);
-						if (producer) {
-							this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerPeerId, kind: producer.kind });
-							/*const transport = producerPeer.getTransport(producer.appData.transportId);
-							if (transport) {								
-								const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
-								logger.info('producer "%s" setMaxIncomingBitrate %d', producerId,maxIncomingBitrate);
-								// If set, apply max incoming bitrate limit.
-								if (maxIncomingBitrate) {
-									try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }
-									catch (error) { }
-								}
-							}*/
-						}
-					}
-				}
+				this._producerRef(consumer);
 				break;
 			}
 
@@ -1900,6 +1855,10 @@ class Room extends EventEmitter
 		{
 			// Remove from its map.
 			consumerPeer.removeConsumer(consumer.id);
+
+			// UnReference the producer of consumer
+			if (!consumer.paused)
+				this._producerUnRef(consumer);
 		});
 
 		consumer.on('producerclose', () =>
@@ -1953,13 +1912,15 @@ class Room extends EventEmitter
 					rtpParameters  : consumer.rtpParameters,
 					type           : consumer.type,
 					appData        : producer.appData,
-					producerPaused : consumer.producerPaused
+					producerPaused : consumer.producerPaused,
+					paused          : producer.kind === 'video'
 				}
 			);
 
 			// Now that we got the positive response from the remote Peer and, if
 			// video, resume the Consumer to ask for an efficient key frame.
-			await consumer.resume();
+			if (producer.kind !== 'video')
+				await consumer.resume();
 
 			this._notification(
 				consumerPeer.socket,
@@ -1969,6 +1930,10 @@ class Room extends EventEmitter
 					score      : consumer.score
 				}
 			);
+
+			// Reference the producer of consumer
+			if (!consumer.paused)
+				this._producerRef(consumer);
 		}
 		catch (error)
 		{
@@ -2179,6 +2144,77 @@ class Room extends EventEmitter
 			);
 	}
 
+	// Producer Ref
+	_producerUnRef(consumer)
+	{
+		if (consumer.kind !== 'video')
+			return;
+		const producerId = consumer.producerId;
+		let ref = this._producersRef.get(producerId);
+		ref = ref - 1;
+		this._producersRef.set(producerId, ref);
+		logger.info('_producerUnRef "%s" kind: %s ref: %d', producerId, consumer.kind, ref);
+		if (ref === 0) {
+			const producerPeerId = consumer.appData.producerPeerId;
+			const producerPeer = this._peers[producerPeerId];
+			if (producerPeer) {
+				const producer = producerPeer.getProducer(producerId);
+				if (producer) {
+					// this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerPeerId, kind: producer.kind });
+					this._setMaxIncomingBitrate(producerPeer, producer, 600000);
+				}
+			}
+		}
+	}
+
+	_producerRef(consumer)
+	{
+		if (consumer.kind !== 'video')
+			return;
+		const producerId = consumer.producerId;
+		let ref = this._producersRef.get(producerId);
+		ref = ref + 1;
+		this._producersRef.set(producerId, ref);
+		logger.info('_producerRef "%s" kind: %s ref: %d', producerId, consumer.kind, ref);
+		if (ref === 1) {
+			const producerPeerId = consumer.appData.producerPeerId;
+			const producerPeer = this._peers[producerPeerId];
+			if (producerPeer) {
+				const producer = producerPeer.getProducer(producerId);
+				if (producer) {
+					// this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerPeerId, kind: producer.kind });
+					const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
+					this._setMaxIncomingBitrate(producerPeer, producer, maxIncomingBitrate);
+				}
+			}
+		}
+	}
+
+	_producerRefInit(peer, producer)
+	{
+		if (producer.kind !== 'video')
+			return;
+		this._producersRef.set(producer.id, 0);
+		// this._notification(peer.socket, 'router:pauseVideo', { producerId: producer.id, kind: producer.kind });
+		this._setMaxIncomingBitrate(peer,producer,600000);
+	}
+
+	_producerRefDeInit(producer)
+	{
+		if (producer.kind !== 'video')
+			return;
+		this._producersRef.delete(producer.id);
+	}
+
+	async _setMaxIncomingBitrate(peer, producer, bitrate)
+	{
+		const transport = peer.getTransport(producer.appData.transportId);
+		if (transport) {			
+			logger.info('producer "%s" setMaxIncomingBitrate %d', producer.id, bitrate);
+			try { await transport.setMaxIncomingBitrate(bitrate); }
+			catch (error) { }
+		}
+	}
 }
 
 module.exports = Room;

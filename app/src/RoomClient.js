@@ -1097,7 +1097,7 @@ export default class RoomClient
 	// Updated consumers based on spotlights
 	async updateSpotlights(spotlights)
 	{
-		// logger.debug('updateSpotlights()');
+		logger.debug('updateSpotlights()');
 
 		store.dispatch(roomActions.setSpotlights(spotlights));
 
@@ -1447,6 +1447,7 @@ export default class RoomClient
 		store.dispatch(meActions.setAudioInProgress(false));
 	}
 
+	// save: save to settings
 	async updateWebcam({
 		init = false,
 		start = false,
@@ -2009,6 +2010,7 @@ export default class RoomClient
 
 	async _pauseConsumer(consumer)
 	{
+		logger.debug('_pauseConsumer() [consumer:"%o"]', consumer);
 		if (consumer.paused || consumer.closed)
 			return;
 
@@ -2031,6 +2033,7 @@ export default class RoomClient
 
 	async _resumeConsumer(consumer)
 	{
+		// logger.debug('_resumeConsumer() [consumer:"%o"]', consumer);
 		if (!consumer.paused || consumer.closed)
 			return;
 		logger.debug('_resumeConsumer() [consumer:"%o"]', consumer);
@@ -2359,7 +2362,8 @@ export default class RoomClient
 						rtpParameters,
 						type,
 						appData,
-						producerPaused
+						producerPaused,
+						paused
 					} = request.data;
 
 					const consumer = await this._recvTransport.consume(
@@ -2370,6 +2374,10 @@ export default class RoomClient
 							rtpParameters,
 							appData : { ...appData, peerId } // Trick.
 						});
+
+					if (paused)
+						consumer.pause();
+					logger.debug('newConsumer: %o', consumer);
 
 					// Store in the map.
 					this._consumers.set(consumer.id, consumer);
@@ -2435,6 +2443,7 @@ export default class RoomClient
 					// bxg: update prefer layer after newConsumer
 					if (kind === 'video')
 					{
+						this._spotlights.handleActiveSpeaker(peerId);
 						consumer.appData.preferredSpatialLayer = spatialLayers - 1;
 						this.updatePreferLayer();
 					}
@@ -3055,6 +3064,7 @@ export default class RoomClient
 					{
 						const resolution = store.getState().settings.resolution;
 
+						logger.debug('router:resumeVideo %s', resolution);
 						this.updateWebcam({ newResolution: resolution, save: false });
 
 						store.dispatch(requestActions.notify(
@@ -3496,15 +3506,16 @@ export default class RoomClient
 					})
 				}));
 
-			this._spotlights.addPeers(peers);
+			// this._spotlights.addPeers(peers);
 
 			if (lastNHistory.length > 0)
 			{
 				logger.debug('_joinRoom() | got lastN history');
 
-				this._spotlights.addSpeakerList(
+				// bianxg
+				/* this._spotlights.addSpeakerList(
 					lastNHistory.filter((peerId) => peerId !== this._peerId)
-				);
+				); */
 			}
 		}
 		catch (error)
