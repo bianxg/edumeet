@@ -302,25 +302,27 @@ class Filmstrip extends React.PureComponent
 						{
 							if (spotlights.find((spotlightsElement) => spotlightsElement === peerId))
 							{
-								return (
-									<Grid key={peerId} item>
-										<div
-											key={peerId}
-											// onClick={() => roomClient.setSelectedPeer(peerId)}
-											className={classnames(classes.filmItem, {
-												selected : this.props.selectedPeerId === peerId,
-												active   : peerId === activePeerId
-											})}
-										>
-											<Peer
-												advancedMode={advancedMode}
-												id={peerId}
-												style={peerStyle}
-												smallContainer
-											/>
-										</div>
-									</Grid>
-								);
+								if (peerId !== activePeerId)
+								{
+									return (
+										<Grid key={peerId} item>
+											<div
+												key={peerId}
+												// onClick={() => roomClient.setSelectedPeer(peerId)}
+												className={classnames(classes.filmItem, {
+													selected : this.props.selectedPeerId === peerId,
+													active   : peerId === activePeerId })}
+											>
+												<Peer
+													advancedMode={advancedMode}
+													id={peerId}
+													style={peerStyle}
+													smallContainer
+												/>
+											</div>
+										</Grid>
+									);
+								}
 							}
 							else
 							{
