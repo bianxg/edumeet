@@ -90,11 +90,17 @@ class Filmstrip extends React.PureComponent
 	getActivePeerId = () =>
 	{
 		const {
-			selectedPeerId,
-			peers
+			// selectedPeerId,
+			// peers,
+			spotlights
 		} = this.props;
 
-		const { lastSpeaker } = this.state;
+		if (spotlights.length > 0)
+		{
+			return spotlights[0];
+		}
+
+		/* const { lastSpeaker } = this.state;
 
 		if (selectedPeerId && peers[selectedPeerId])
 		{
@@ -111,7 +117,7 @@ class Filmstrip extends React.PureComponent
 		if (peerIds.length > 0)
 		{
 			return peerIds[0];
-		}
+		} */
 	};
 
 	isSharingCamera = (peerId) => this.props.peers[peerId] &&

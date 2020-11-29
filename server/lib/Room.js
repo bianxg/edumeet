@@ -220,7 +220,7 @@ class Room extends EventEmitter
 			{
 				maxEntries : 1,
 				threshold  : -80,
-				interval   : 800
+				interval   : 2800
 			});
 
 		return new Room({

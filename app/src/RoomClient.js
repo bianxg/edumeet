@@ -253,6 +253,9 @@ export default class RoomClient
 
 		this._screenSharingProducer = null;
 
+		this._activeSpeakerId = null;
+		this._lastActiveSpeakerTime = 0;
+
 		this._startKeyListener();
 
 		this._startDevicesListener();
@@ -1051,37 +1054,44 @@ export default class RoomClient
 	// Update prefered layer based on spotlights and room mode
 	async updatePreferLayer()
 	{
-		// logger.debug('updatePreferLayer()');
 		try
 		{
 			// Prefer layer according room mode
 			let activePeerId;
 
 			if (this._spotlights._currentSpotlights.length > 0)
+			{
 				activePeerId = this._spotlights._currentSpotlights[0];
+				logger.debug('updatePreferLayer() activePeerId: %s', activePeerId);
+			}
 			for (const consumer of this._consumers.values())
 			{
 				if (consumer.kind === 'video' && this._spotlights.peerInSpotlights(consumer.appData.peerId))
 				{
 					if (store.getState().room.mode === 'filmstrip')
 					{
-						if (activePeerId && activePeerId === consumer.appData.peerId &&
-							consumer.appData.preferredSpatialLayer !== 2)
+						if (activePeerId && activePeerId === consumer.appData.peerId)
 						{
-							logger.debug('updatePreferLayer() consumer.id: %s preferredSpatialLayer: %d', consumer.id, 2);
-							consumer.appData.preferredSpatialLayer = 2;
-							await this.setConsumerPreferredLayers(consumer.id, 2);
+							if (consumer.appData.preferredSpatialLayer !== 2)
+							{
+								logger.debug('updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
+									consumer.appData.peerId, consumer.id, 2);
+								consumer.appData.preferredSpatialLayer = 2;
+								await this.setConsumerPreferredLayers(consumer.id, 2);
+							}
 						}
 						else if (consumer.appData.preferredSpatialLayer !== 0)
 						{
-							logger.debug('updatePreferLayer() consumer.id: %s preferredSpatialLayer: %d', consumer.id, 0);
+							logger.debug('updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
+								consumer.appData.peerId, consumer.id, 0);
 							consumer.appData.preferredSpatialLayer = 0;
 							await this.setConsumerPreferredLayers(consumer.id, 0);
 						}
 					}
 					else if (consumer.appData.preferredSpatialLayer !== 1)
 					{
-						logger.debug('updatePreferLayer() consumer.id: %s preferredSpatialLayer: %d', consumer.id, 1);
+						logger.debug('updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
+							consumer.appData.peerId, consumer.id, 1);
 						consumer.appData.preferredSpatialLayer = 1;
 						await this.setConsumerPreferredLayers(consumer.id, 1);
 					}
