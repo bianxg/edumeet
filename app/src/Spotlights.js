@@ -83,6 +83,11 @@ export default class Spotlights
 		this._spotlightsUpdated();
 	}
 
+	hasPeer(id)
+	{
+		return this._peerList.indexOf(id) !== -1;
+	}
+
 	addSpeakerList(speakerList)
 	{
 		this._peerList = [ ...new Set([ ...speakerList, ...this._peerList ]) ];
@@ -103,12 +108,15 @@ export default class Spotlights
 
 			this._spotlightsUpdated();
 		}
+
+		/*
 		else
 		{
 			this._peerList = [ peerId ].concat(this._peerList);
 
 			this._spotlightsUpdated();
 		}
+		*/
 	}
 
 	_spotlightsUpdated()

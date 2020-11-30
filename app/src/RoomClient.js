@@ -1121,7 +1121,9 @@ export default class RoomClient
 						await this._resumeConsumer(consumer);
 					else
 					{
-						await this._pauseConsumer(consumer);
+						// bianxg: Pause consumer only when peer is exist
+						if (this._spotlights.hasPeer(consumer.appData.peerId))
+							await this._pauseConsumer(consumer);
 						store.dispatch(
 							roomActions.removeSelectedPeer(consumer.appData.peerId));
 					}
@@ -3057,13 +3059,13 @@ export default class RoomClient
 					// bianxg
 					case 'router:pauseVideo':
 					{
-						this.updateWebcam({ newResolution: 'low', save: false });
+						// this.updateWebcam({ newResolution: 'low', save: false });
 
 						store.dispatch(requestActions.notify(
 							{
 								text : intl.formatMessage({
 									id             : 'router.pauseVideo',
-									defaultMessage : 'No peer watch your video'
+									defaultMessage : 'No peer watch you'
 								})
 							}));
 
@@ -3072,16 +3074,16 @@ export default class RoomClient
 
 					case 'router:resumeVideo':
 					{
-						const resolution = store.getState().settings.resolution;
+						// const resolution = store.getState().settings.resolution;
 
-						logger.debug('router:resumeVideo %s', resolution);
-						this.updateWebcam({ newResolution: resolution, save: false });
+						// logger.debug('router:resumeVideo %s', resolution);
+						// this.updateWebcam({ newResolution: resolution, save: false });
 
 						store.dispatch(requestActions.notify(
 							{
 								text : intl.formatMessage({
 									id             : 'router.resumeVideo',
-									defaultMessage : 'Peer watch your video'
+									defaultMessage : 'Some peers watch you'
 								})
 							}));
 
@@ -3516,16 +3518,15 @@ export default class RoomClient
 					})
 				}));
 
-			// this._spotlights.addPeers(peers);
+			this._spotlights.addPeers(peers);
 
 			if (lastNHistory.length > 0)
 			{
 				logger.debug('_joinRoom() | got lastN history');
 
-				// bianxg
-				/* this._spotlights.addSpeakerList(
+				this._spotlights.addSpeakerList(
 					lastNHistory.filter((peerId) => peerId !== this._peerId)
-				); */
+				);
 			}
 		}
 		catch (error)
