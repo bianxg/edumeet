@@ -349,7 +349,7 @@ export default class RoomClient
 									defaultMessage : 'Changed layout to democratic view'
 								})
 							}));
-						this.updatePreferLayer();
+						this._updatePreferLayer();
 						break;
 					}
 
@@ -363,7 +363,7 @@ export default class RoomClient
 									defaultMessage : 'Changed layout to filmstrip view'
 								})
 							}));
-						this.updatePreferLayer();
+						this._updatePreferLayer();
 						break;
 					}
 
@@ -1052,7 +1052,7 @@ export default class RoomClient
 	}
 
 	// Update prefered layer based on spotlights and room mode
-	async updatePreferLayer()
+	async _updatePreferLayer()
 	{
 		try
 		{
@@ -1062,7 +1062,7 @@ export default class RoomClient
 			if (this._spotlights._currentSpotlights.length > 0)
 			{
 				activePeerId = this._spotlights._currentSpotlights[0];
-				logger.debug('updatePreferLayer() activePeerId: %s', activePeerId);
+				logger.debug('_updatePreferLayer() activePeerId: %s', activePeerId);
 			}
 			for (const consumer of this._consumers.values())
 			{
@@ -1074,7 +1074,7 @@ export default class RoomClient
 						{
 							if (consumer.appData.preferredSpatialLayer !== 2)
 							{
-								logger.debug('updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
+								logger.debug('_updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
 									consumer.appData.peerId, consumer.id, 2);
 								consumer.appData.preferredSpatialLayer = 2;
 								await this.setConsumerPreferredLayers(consumer.id, 2);
@@ -1082,7 +1082,7 @@ export default class RoomClient
 						}
 						else if (consumer.appData.preferredSpatialLayer !== 0)
 						{
-							logger.debug('updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
+							logger.debug('_updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
 								consumer.appData.peerId, consumer.id, 0);
 							consumer.appData.preferredSpatialLayer = 0;
 							await this.setConsumerPreferredLayers(consumer.id, 0);
@@ -1090,7 +1090,7 @@ export default class RoomClient
 					}
 					else if (consumer.appData.preferredSpatialLayer !== 1)
 					{
-						logger.debug('updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
+						logger.debug('_updatePreferLayer() peer: %s, consumer.id: %s preferredSpatialLayer: %d',
 							consumer.appData.peerId, consumer.id, 1);
 						consumer.appData.preferredSpatialLayer = 1;
 						await this.setConsumerPreferredLayers(consumer.id, 1);
@@ -1100,14 +1100,14 @@ export default class RoomClient
 		}
 		catch (error)
 		{
-			logger.error('updatePreferLayer() [error:"%o"]', error);
+			logger.error('_updatePreferLayer() [error:"%o"]', error);
 		}
 	}
 
 	// Updated consumers based on spotlights
 	async updateSpotlights(spotlights)
 	{
-		logger.debug('updateSpotlights()');
+		logger.debug('updateSpotlights(%o)', spotlights);
 
 		store.dispatch(roomActions.setSpotlights(spotlights));
 
@@ -1121,7 +1121,7 @@ export default class RoomClient
 						await this._resumeConsumer(consumer);
 					else
 					{
-						// bianxg: Pause consumer only when peer is exist
+						// bxg: Pause consumer only when peer is exist
 						if (this._spotlights.hasPeer(consumer.appData.peerId))
 							await this._pauseConsumer(consumer);
 						store.dispatch(
@@ -1129,7 +1129,7 @@ export default class RoomClient
 					}
 				}
 			}
-			await this.updatePreferLayer();
+			await this._updatePreferLayer();
 		}
 		catch (error)
 		{
@@ -2022,7 +2022,7 @@ export default class RoomClient
 
 	async _pauseConsumer(consumer)
 	{
-		logger.debug('_pauseConsumer() [consumer:"%o"]', consumer);
+		// logger.debug('_pauseConsumer() [consumer:"%o"]', consumer);
 		if (consumer.paused || consumer.closed)
 			return;
 
@@ -2455,9 +2455,9 @@ export default class RoomClient
 					// bxg: update prefer layer after newConsumer
 					if (kind === 'video')
 					{
-						this._spotlights.handleActiveSpeaker(peerId);
+						// Init preferredSpatialLayer
 						consumer.appData.preferredSpatialLayer = spatialLayers - 1;
-						this.updatePreferLayer();
+						this._spotlights.handleActiveSpeaker(peerId);
 					}
 					break;
 				}
@@ -2474,7 +2474,7 @@ export default class RoomClient
 		this._signalingSocket.on('notification', async (notification) =>
 		{
 			// bxg: Reduce log
-			if (notification.method !== 'activeSpeaker')
+			if (notification.method !== 'activeSpeaker' && notification.method !== 'producerScore')
 			{
 				logger.debug('socket "notification" event [method:"%s", data:"%o"]',
 					notification.method, notification.data);
@@ -3056,7 +3056,7 @@ export default class RoomClient
 
 						break;
 					}
-					// bianxg
+					// bxg
 					case 'router:pauseVideo':
 					{
 						// this.updateWebcam({ newResolution: 'low', save: false });
@@ -3518,7 +3518,10 @@ export default class RoomClient
 					})
 				}));
 
-			this._spotlights.addPeers(peers);
+			if (peers.length > 0)
+			{
+				this._spotlights.addPeers(peers);
+			}
 
 			if (lastNHistory.length > 0)
 			{

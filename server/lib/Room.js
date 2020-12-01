@@ -294,7 +294,7 @@ class Room extends EventEmitter
 		this._handleLobby();
 		this._handleAudioLevelObserver();
 
-		// Producer Ref (bianxg)
+		// Producer Ref (bxg)
 		this._producersRef = new Map();
 	}
 
@@ -349,7 +349,7 @@ class Room extends EventEmitter
 
 		this._audioLevelObserver = null;
 
-		// Producer Ref (bianxg)
+		// Producer Ref (bxg)
 		this._producersRef = null;
 
 		// Emit 'close' event.
@@ -1053,13 +1053,13 @@ class Room extends EventEmitter
 				// Add peerId into appData to later get the associated Peer during
 				// the 'loudest' event of the audioLevelObserver.
 				// appData = { ...appData, peerId: peer.id };
-				// bianxg
+				// bxg
 				appData = { ...appData, peerId: peer.id, transportId: transportId};
 
 				const producer =
 					await transport.produce({ kind, rtpParameters, appData });
 
-				// bianxg
+				// bxg
 				this._producerRefInit(peer, producer);
 
 				const pipeRouters = this._getRoutersToPipeTo(peer.routerId);
@@ -1133,7 +1133,7 @@ class Room extends EventEmitter
 
 				cb();
 
-				// bianxg
+				// bxg
 				this._producerRefDeInit(producer);
 
 				break;
@@ -1193,7 +1193,7 @@ class Room extends EventEmitter
 
 				cb();
 
-				// bianxg
+				// bxg
 				this._producerUnRef(consumer);
 				break;
 			}
@@ -1214,7 +1214,7 @@ class Room extends EventEmitter
 
 				cb();
 
-				// bianxg
+				// bxg
 				this._producerRef(consumer);
 				break;
 			}
@@ -1824,7 +1824,7 @@ class Room extends EventEmitter
 		// Create the Consumer in paused mode.
 		let consumer;
 
-		// bianxg
+		// bxg
 		let appData = { producerId: producer.id, producerPeerId: producerPeer.id };
 
 		try
@@ -1913,13 +1913,13 @@ class Room extends EventEmitter
 					type           : consumer.type,
 					appData        : producer.appData,
 					producerPaused : consumer.producerPaused,
-					paused          : producer.kind === 'video'
+					paused         : producer.kind === 'video' && producer.appData.source === 'webcam'
 				}
 			);
 
 			// Now that we got the positive response from the remote Peer and, if
 			// video, resume the Consumer to ask for an efficient key frame.
-			if (producer.kind !== 'video')
+			if ( !(producer.kind === 'video' && producer.appData.source === 'webcam') )
 				await consumer.resume();
 
 			this._notification(
@@ -2160,8 +2160,9 @@ class Room extends EventEmitter
 			if (producerPeer) {
 				const producer = producerPeer.getProducer(producerId);
 				if (producer) {
-					this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerPeerId, kind: producer.kind });
-					this._setMaxIncomingBitrate(producerPeer, producer, 600000);
+					this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerId, kind: producer.kind });
+					const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
+					this._setMaxIncomingBitrate(producerPeer, producer, minIncomingBitrate);
 				}
 			}
 		}
@@ -2182,7 +2183,7 @@ class Room extends EventEmitter
 			if (producerPeer) {
 				const producer = producerPeer.getProducer(producerId);
 				if (producer) {
-					this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerPeerId, kind: producer.kind });
+					this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerId, kind: producer.kind });
 					const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
 					this._setMaxIncomingBitrate(producerPeer, producer, maxIncomingBitrate);
 				}
@@ -2196,7 +2197,8 @@ class Room extends EventEmitter
 			return;
 		this._producersRef.set(producer.id, 0);
 		// this._notification(peer.socket, 'router:pauseVideo', { producerId: producer.id, kind: producer.kind });
-		this._setMaxIncomingBitrate(peer,producer,600000);
+		const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
+		this._setMaxIncomingBitrate(peer, producer, minIncomingBitrate);
 	}
 
 	_producerRefDeInit(producer)

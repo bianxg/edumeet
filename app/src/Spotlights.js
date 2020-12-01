@@ -15,6 +15,8 @@ export default class Spotlights
 
 	addPeers(peers)
 	{
+		if (peers.length > 0)
+			return;
 		for (const peer of peers)
 		{
 			if (this._peerList.indexOf(peer.id) === -1)
@@ -90,6 +92,8 @@ export default class Spotlights
 
 	addSpeakerList(speakerList)
 	{
+		if (speakerList.length === 0)
+			return;
 		this._peerList = [ ...new Set([ ...speakerList, ...this._peerList ]) ];
 		this._spotlightsUpdated();
 	}
@@ -150,7 +154,7 @@ export default class Spotlights
 		else
 		{
 			// bxg: Reduce log
-			logger.debug('_spotlightsUpdated() | spotlights not updated');
+			// logger.debug('_spotlightsUpdated() | spotlights not updated');
 		}
 	}
 
