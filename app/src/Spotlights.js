@@ -98,7 +98,7 @@ export default class Spotlights
 		this._spotlightsUpdated();
 	}
 
-	handleActiveSpeaker(peerId)
+	handleActiveSpeaker(peerId, force = false)
 	{
 		// bxg: Reduce log
 		logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
@@ -110,7 +110,7 @@ export default class Spotlights
 			this._peerList.splice(index, 1);
 			this._peerList = [ peerId ].concat(this._peerList);
 
-			this._spotlightsUpdated();
+			this._spotlightsUpdated(force);
 		}
 
 		/*
@@ -123,7 +123,7 @@ export default class Spotlights
 		*/
 	}
 
-	_spotlightsUpdated()
+	_spotlightsUpdated(force = false)
 	{
 		let spotlights;
 
@@ -144,7 +144,7 @@ export default class Spotlights
 		}
 
 		if (!this._arraysEqual(
-			this._currentSpotlights, spotlights.slice(0, maxSpotlights)))
+			this._currentSpotlights, spotlights.slice(0, maxSpotlights)) || force)
 		{
 			logger.debug('_spotlightsUpdated(%s) | spotlights updated, emitting %s', JSON.stringify(spotlights.slice(0, maxSpotlights)));
 

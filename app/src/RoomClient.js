@@ -2457,7 +2457,9 @@ export default class RoomClient
 					{
 						// Init preferredSpatialLayer
 						consumer.appData.preferredSpatialLayer = spatialLayers - 1;
-						this._spotlights.handleActiveSpeaker(peerId);
+						// bxg: Sometimes consumer is not ready when spotlights updated
+						// So need force update it again
+						this._spotlights.handleActiveSpeaker(peerId, true);
 					}
 					break;
 				}
