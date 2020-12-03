@@ -2160,7 +2160,8 @@ class Room extends EventEmitter
 			if (producerPeer) {
 				const producer = producerPeer.getProducer(producerId);
 				if (producer) {
-					this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerId, kind: producer.kind });
+					this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerId, kind: producer.kind,
+						source: producer.appData.source });
 					// const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
 					// this._setMaxIncomingBitrate(producerPeer, producer, minIncomingBitrate);
 				}
@@ -2183,7 +2184,8 @@ class Room extends EventEmitter
 			if (producerPeer) {
 				const producer = producerPeer.getProducer(producerId);
 				if (producer) {
-					this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerId, kind: producer.kind });
+					this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerId,
+						kind: producer.kind, source: producer.appData.source });
 					// const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
 					// this._setMaxIncomingBitrate(producerPeer, producer, maxIncomingBitrate);
 				}

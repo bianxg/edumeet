@@ -1575,7 +1575,8 @@ export default class RoomClient
 							},
 							appData :
 							{
-								source : 'webcam'
+								source       : 'webcam',
+								spatialLayer : 0
 							}
 						});
 					// bxg
@@ -2113,6 +2114,16 @@ export default class RoomClient
 			meActions.setRaisedHandInProgress(false));
 	}
 
+	async setMaxSendingSpatialLayerInit()
+	{
+		if (!this._webcamProducer)
+			return;
+
+		this._webcamProducer.appData.spatialLayerInit = true;
+		if (this._webcamProducer.appData.spatialLayer === 0)
+			this.setMaxSendingSpatialLayer(0);
+	}
+
 	async setMaxSendingSpatialLayer(spatialLayer)
 	{
 		logger.debug('setMaxSendingSpatialLayer() [spatialLayer:"%s"]', spatialLayer);
@@ -2120,9 +2131,14 @@ export default class RoomClient
 		try
 		{
 			if (this._webcamProducer)
-				await this._webcamProducer.setMaxSpatialLayer(spatialLayer);
-			if (this._screenSharingProducer)
-				await this._screenSharingProducer.setMaxSpatialLayer(spatialLayer);
+			{
+				this._webcamProducer.appData.spatialLayer = spatialLayer;
+				if (this._webcamProducer.appData.spatialLayerInit)
+					await this._webcamProducer.setMaxSpatialLayer(spatialLayer);
+			}
+
+			/* if (this._screenSharingProducer)
+				await this._screenSharingProducer.setMaxSpatialLayer(spatialLayer); */
 		}
 		catch (error)
 		{
@@ -3534,7 +3550,7 @@ export default class RoomClient
 				);
 			}
 
-			this.setMaxSendingSpatialLayer(0);
+			this.setMaxSendingSpatialLayerInit();
 		}
 		catch (error)
 		{
