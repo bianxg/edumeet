@@ -1059,9 +1059,6 @@ class Room extends EventEmitter
 				const producer =
 					await transport.produce({ kind, rtpParameters, appData });
 
-				// bxg
-				this._producerRefInit(peer, producer);
-
 				const pipeRouters = this._getRoutersToPipeTo(peer.routerId);
 
 				for (const [ routerId, destinationRouter ] of this._mediasoupRouters)
@@ -1110,6 +1107,9 @@ class Room extends EventEmitter
 					this._audioLevelObserver.addProducer({ producerId: producer.id })
 						.catch(() => {});
 				}
+
+				// bxg
+				this._producerRefInit(peer, producer);
 
 				break;
 			}
@@ -1825,7 +1825,7 @@ class Room extends EventEmitter
 		let consumer;
 
 		// bxg
-		let appData = { producerId: producer.id, producerPeerId: producerPeer.id };
+		let appData = { producerId: producer.id, producerPeerId: producerPeer.id, source: producer.appData.source };
 
 		try
 		{
@@ -2147,7 +2147,7 @@ class Room extends EventEmitter
 	// Producer Ref
 	_producerUnRef(consumer)
 	{
-		if (consumer.kind !== 'video')
+		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
 			return;
 		const producerId = consumer.producerId;
 		let ref = this._producersRef.get(producerId);
@@ -2170,7 +2170,7 @@ class Room extends EventEmitter
 
 	_producerRef(consumer)
 	{
-		if (consumer.kind !== 'video')
+		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
 			return;
 		const producerId = consumer.producerId;
 		let ref = this._producersRef.get(producerId);
@@ -2193,10 +2193,10 @@ class Room extends EventEmitter
 
 	_producerRefInit(peer, producer)
 	{
-		if (producer.kind !== 'video')
+		if (producer.kind !== 'video' || producer.appData.source !== 'webcam')
 			return;
 		this._producersRef.set(producer.id, 0);
-		this._notification(peer.socket, 'router:pauseVideo', { producerId: producer.id, kind: producer.kind });
+		// this._notification(peer.socket, 'router:pauseVideo', { producerId: producer.id, kind: producer.kind });
 		// const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
 		// this._setMaxIncomingBitrate(peer, producer, minIncomingBitrate);
 	}

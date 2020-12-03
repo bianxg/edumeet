@@ -1579,7 +1579,7 @@ export default class RoomClient
 							}
 						});
 					// bxg
-					this.setMaxSendingSpatialLayer(0);
+					// this.setMaxSendingSpatialLayer(0);
 				}
 				else
 				{
@@ -3313,6 +3313,7 @@ export default class RoomClient
 								});
 
 							callback({ id });
+							// this.setMaxSendingSpatialLayer(0);
 						}
 						catch (error)
 						{
@@ -3532,6 +3533,8 @@ export default class RoomClient
 					lastNHistory.filter((peerId) => peerId !== this._peerId)
 				);
 			}
+
+			this.setMaxSendingSpatialLayer(0);
 		}
 		catch (error)
 		{
