@@ -2161,8 +2161,8 @@ class Room extends EventEmitter
 				const producer = producerPeer.getProducer(producerId);
 				if (producer) {
 					this._notification(producerPeer.socket, 'router:pauseVideo', { producerId: producerId, kind: producer.kind });
-					const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
-					this._setMaxIncomingBitrate(producerPeer, producer, minIncomingBitrate);
+					// const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
+					// this._setMaxIncomingBitrate(producerPeer, producer, minIncomingBitrate);
 				}
 			}
 		}
@@ -2184,8 +2184,8 @@ class Room extends EventEmitter
 				const producer = producerPeer.getProducer(producerId);
 				if (producer) {
 					this._notification(producerPeer.socket, 'router:resumeVideo', { producerId: producerId, kind: producer.kind });
-					const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
-					this._setMaxIncomingBitrate(producerPeer, producer, maxIncomingBitrate);
+					// const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
+					// this._setMaxIncomingBitrate(producerPeer, producer, maxIncomingBitrate);
 				}
 			}
 		}
@@ -2196,9 +2196,9 @@ class Room extends EventEmitter
 		if (producer.kind !== 'video')
 			return;
 		this._producersRef.set(producer.id, 0);
-		// this._notification(peer.socket, 'router:pauseVideo', { producerId: producer.id, kind: producer.kind });
-		const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
-		this._setMaxIncomingBitrate(peer, producer, minIncomingBitrate);
+		this._notification(peer.socket, 'router:pauseVideo', { producerId: producer.id, kind: producer.kind });
+		// const minIncomingBitrate = config.mediasoup.webRtcTransport.minIncomingBitrate || 300000;
+		// this._setMaxIncomingBitrate(peer, producer, minIncomingBitrate);
 	}
 
 	_producerRefDeInit(producer)

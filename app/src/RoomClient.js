@@ -1578,6 +1578,8 @@ export default class RoomClient
 								source : 'webcam'
 							}
 						});
+					// bxg
+					this.setMaxSendingSpatialLayer(0);
 				}
 				else
 				{
@@ -3061,7 +3063,7 @@ export default class RoomClient
 					// bxg
 					case 'router:pauseVideo':
 					{
-						// this.updateWebcam({ newResolution: 'low', save: false });
+						this.setMaxSendingSpatialLayer(0);
 
 						store.dispatch(requestActions.notify(
 							{
@@ -3076,10 +3078,7 @@ export default class RoomClient
 
 					case 'router:resumeVideo':
 					{
-						// const resolution = store.getState().settings.resolution;
-
-						// logger.debug('router:resumeVideo %s', resolution);
-						// this.updateWebcam({ newResolution: resolution, save: false });
+						this.setMaxSendingSpatialLayer(2);
 
 						store.dispatch(requestActions.notify(
 							{
