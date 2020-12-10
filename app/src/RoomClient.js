@@ -1579,8 +1579,6 @@ export default class RoomClient
 								spatialLayer : 0
 							}
 						});
-					// bxg
-					// this.setMaxSendingSpatialLayer(0);
 				}
 				else
 				{
@@ -3077,30 +3075,17 @@ export default class RoomClient
 						break;
 					}
 					// bxg
-					case 'router:pauseVideo':
+					case 'router:setMaxLayer':
 					{
-						this.setMaxSendingSpatialLayer(0);
+						const { maxLayer } = notification.data;
+
+						this.setMaxSendingSpatialLayer(maxLayer);
 
 						store.dispatch(requestActions.notify(
 							{
 								text : intl.formatMessage({
-									id             : 'router.pauseVideo',
-									defaultMessage : 'No peer watch you'
-								})
-							}));
-
-						break;
-					}
-
-					case 'router:resumeVideo':
-					{
-						this.setMaxSendingSpatialLayer(2);
-
-						store.dispatch(requestActions.notify(
-							{
-								text : intl.formatMessage({
-									id             : 'router.resumeVideo',
-									defaultMessage : 'Some peers watch you'
+									id             : 'router.setMaxLayer',
+									defaultMessage : 'setMaxLayer: {maxLayer}'
 								})
 							}));
 
@@ -3329,7 +3314,6 @@ export default class RoomClient
 								});
 
 							callback({ id });
-							// this.setMaxSendingSpatialLayer(0);
 						}
 						catch (error)
 						{
