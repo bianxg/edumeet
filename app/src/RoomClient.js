@@ -1070,6 +1070,9 @@ export default class RoomClient
 				{
 					if (store.getState().room.mode === 'filmstrip')
 					{
+						// logger.debug('_updatePreferLayer() activePeerId: %s, consumer.appData.peerId: %s',
+						// activePeerId, consumer.appData.peerId);
+
 						if (activePeerId && activePeerId === consumer.appData.peerId)
 						{
 							if (consumer.appData.preferredSpatialLayer !== 2)
@@ -2117,9 +2120,10 @@ export default class RoomClient
 		if (!this._webcamProducer)
 			return;
 
+		logger.debug('setMaxSendingSpatialLayerInit()');
 		this._webcamProducer.appData.spatialLayerInit = true;
-		if (this._webcamProducer.appData.spatialLayer === 0)
-			this.setMaxSendingSpatialLayer(0);
+		if (this._webcamProducer.appData.spatialLayer !== 2) // Only handle with layer 0,1 
+			this.setMaxSendingSpatialLayer(this._webcamProducer.appData.spatialLayer);
 	}
 
 	async setMaxSendingSpatialLayer(spatialLayer)
@@ -2472,7 +2476,7 @@ export default class RoomClient
 					if (kind === 'video')
 					{
 						// Init preferredSpatialLayer
-						consumer.appData.preferredSpatialLayer = spatialLayers - 1;
+						consumer.appData.preferredSpatialLayer = 0;
 						// bxg: Sometimes consumer is not ready when spotlights updated
 						// So need force update it again
 						this._spotlights.handleActiveSpeaker(peerId, true);
@@ -3085,7 +3089,9 @@ export default class RoomClient
 							{
 								text : intl.formatMessage({
 									id             : 'router.setMaxLayer',
-									defaultMessage : 'setMaxLayer: {maxLayer}'
+									defaultMessage : 'setMaxLayer: {layer}'
+								}, {
+									layer : maxLayer
 								})
 							}));
 

@@ -1103,7 +1103,7 @@ class Room extends EventEmitter
 				}
 
 				// bxg
-				this._onNewProducer(producer);
+				this._onNewProducer(peer, producer);
 
 				break;
 			}
@@ -1185,7 +1185,7 @@ class Room extends EventEmitter
 				cb();
 
 				// bxg
-				this._onConsumerPause(consumer);
+				this._onConsumerPause(peer,consumer);
 				break;
 			}
 
@@ -1206,7 +1206,7 @@ class Room extends EventEmitter
 				cb();
 
 				// bxg
-				this._onConsumerResume(consumer);
+				this._onConsumerResume(peer, consumer);
 				break;
 			}
 
@@ -1228,7 +1228,7 @@ class Room extends EventEmitter
 
 				const lastLayer = consumer.appData.preferLayer;
 				consumer.appData.preferLayer = spatialLayer;
-				this._onConsumerPreferLayerChange(consumer,lastLayer)
+				this._onConsumerPreferLayerChange(peer, consumer,lastLayer)
 
 				break;
 			}
@@ -1820,7 +1820,10 @@ class Room extends EventEmitter
 		let consumer;
 
 		// bxg
-		let appData = { producerId: producer.id, producerPeerId: producerPeer.id, source: producer.appData.source };
+		let appData = { producerId: producer.id,
+			producerPeerId: producerPeer.id,
+			peerId: consumerPeer.id,
+			source: producer.appData.source };
 
 		try
 		{
@@ -1853,7 +1856,7 @@ class Room extends EventEmitter
 
 			// UnReference the producer of consumer
 			if (!consumer.paused)
-				this._onConsumerPause(consumer);
+				this._onConsumerPause(consumerPeer, consumer);
 		});
 
 		consumer.on('producerclose', () =>
@@ -1926,7 +1929,7 @@ class Room extends EventEmitter
 				}
 			);
 
-			this._onNewConsumer(producer,consumer);
+			this._onNewConsumer(consumerPeer, producerPeer, producer,consumer);
 		}
 		catch (error)
 		{
@@ -2138,7 +2141,7 @@ class Room extends EventEmitter
 	}
 
 	
-	_onConsumerPause(consumer)
+	_onConsumerPause(peer, consumer)
 	{
 		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
 			return;
@@ -2150,7 +2153,7 @@ class Room extends EventEmitter
 		const producer = producerPeer.getProducer(producerId);
 		if (!producer)
 			return;
-		logger.info('_onConsumerPause "%s" kind: %s', producerId, consumer.kind);
+		logger.info('Consumer "%s" pause producer "%s"', peer.displayName, producerPeer.displayName);
 
 		if (consumer.appData.preferLayer === 1)
 			producer.appData.layer1 -= 1;
@@ -2165,6 +2168,7 @@ class Room extends EventEmitter
 
 		if (newMaxLayer < producer.appData.maxLayer)
 		{
+			logger.info('Producer "%s" set max layer %d->%d', producerPeer.displayName, producer.appData.maxLayer, newMaxLayer);
 			this._notification(producerPeer.socket, 'router:setMaxLayer', {
 				producerId: producerId,
 				kind: producer.kind,
@@ -2174,7 +2178,7 @@ class Room extends EventEmitter
 		}
 	}
 
-	_onConsumerResume(consumer) {
+	_onConsumerResume(peer, consumer) {
 		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
 			return;
 		const producerId = consumer.producerId;
@@ -2186,7 +2190,7 @@ class Room extends EventEmitter
 		if (!producer)
 			return;
 		
-		logger.info('_onConsumerResume "%s" kind: %s', producerId, consumer.kind);
+		logger.info('Consumer "%s" resume producer "%s"', peer.displayName, producerPeer.displayName);
 		if (consumer.appData.preferLayer === 1)
 			producer.appData.layer1 += 1;
 		else if (consumer.appData.preferLayer === 2)
@@ -2199,6 +2203,7 @@ class Room extends EventEmitter
 
 		if (newMaxLayer > producer.appData.maxLayer)
 		{
+			logger.info('Producer "%s" set max layer %d->%d', producerPeer.displayName, producer.appData.maxLayer, newMaxLayer);
 			this._notification(producerPeer.socket, 'router:setMaxLayer', {
 				producerId: producerId,
 				kind: producer.kind,
@@ -2208,7 +2213,7 @@ class Room extends EventEmitter
 		}
 	}
 
-	_onConsumerPreferLayerChange(consumer,lastLayer)
+	_onConsumerPreferLayerChange(peer, consumer,lastLayer)
 	{
 		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
 			return;
@@ -2220,7 +2225,9 @@ class Room extends EventEmitter
 		const producer = producerPeer.getProducer(producerId);
 		if (!producer)
 			return;
-		logger.info('_onConsumerPreferLayerChange "%s" kind: %s %d->%d', producerId, consumer.kind, lastLayer, consumer.appData.preferLayer);
+
+		logger.info('Consumer "%s" prefer producer "%s" layer %d->%d', peer.displayName, producerPeer.displayName,
+			lastLayer, consumer.appData.preferLayer);
 
 		if (lastLayer === 1)
 			producer.appData.layer1 -= 1;
@@ -2238,8 +2245,9 @@ class Room extends EventEmitter
 		else if (producer.appData.layer1 > 0)
 			newMaxLayer = 1;
 
-		if (newMaxLayer != producer.appData.maxLayer)
+		if (newMaxLayer !== producer.appData.maxLayer)
 		{
+			logger.info('Producer "%s" set max layer %d->%d', producerPeer.displayName, producer.appData.maxLayer, newMaxLayer);
 			this._notification(producerPeer.socket, 'router:setMaxLayer', {
 				producerId: producerId,
 				kind: producer.kind,
@@ -2248,24 +2256,26 @@ class Room extends EventEmitter
 			producer.appData.maxLayer = newMaxLayer;
 		}
 	}
-	_onNewConsumer(producer, consumer)
+	_onNewConsumer(consumerPeer, producerPeer, producer, consumer)
 	{
 		if (producer.kind === 'video' && producer.appData.source === 'webcam')
 		{
-			consumer.appData.preferLayer = 2;
+			consumer.appData.preferLayer = 0;
+			logger.info('New consumer "%s" producer "%s"', consumerPeer.displayName, producerPeer.displayName);
 		}
 	}
 
-	_onNewProducer(producer)
+	_onNewProducer(peer, producer)
 	{
 		if (producer.kind !== 'video' || producer.appData.source !== 'webcam')
 			return;
 		producer.appData.layer1 = 0;
 		producer.appData.layer2 = 0;
 		producer.appData.maxLayer = 0;
+		logger.info('New producer "%s"', peer.displayName);
 	}
 
-	async _setMaxIncomingBitrate(peer, producer, bitrate)
+	/* async _setMaxIncomingBitrate(peer, producer, bitrate)
 	{
 		const transport = peer.getTransport(producer.appData.transportId);
 		if (transport) {			
@@ -2273,7 +2283,7 @@ class Room extends EventEmitter
 			try { await transport.setMaxIncomingBitrate(bitrate); }
 			catch (error) { }
 		}
-	}
+	} */
 }
 
 module.exports = Room;

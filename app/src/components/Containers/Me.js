@@ -342,7 +342,7 @@ const Me = (props) =>
 	{
 		let poll;
 
-		const interval = 1000;
+		const interval = 2000; // bxg 1000;
 
 		if (advancedMode)
 		{
