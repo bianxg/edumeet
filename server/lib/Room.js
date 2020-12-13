@@ -1827,13 +1827,28 @@ class Room extends EventEmitter
 
 		try
 		{
-			consumer = await transport.consume(
-				{
-					producerId      : producer.id,
-					rtpCapabilities : consumerPeer.rtpCapabilities,
-					paused          : producer.kind === 'video',
-					appData         : appData
-				});
+			// bxg: fix when the first peer can not receive video from the second peer 
+			// Reproduce condition: 1 on some host; 2 the second peer join with both audio and video
+			// This may be a bug of mediasoup RTC part.
+			if (producer.kind !== 'video') {
+				consumer = await transport.consume(
+					{
+						producerId: producer.id,
+						rtpCapabilities: consumerPeer.rtpCapabilities,
+						paused: producer.kind === 'video',
+						appData: appData
+					});
+			}
+			else {
+				consumer = await transport.consume(
+					{
+						producerId: producer.id,
+						rtpCapabilities: consumerPeer.rtpCapabilities,
+						paused: true,
+						preferredLayers: { spatialLayer: 0 },
+						appData: appData
+					});
+			}
 
 			if (producer.kind === 'audio')
 				await consumer.setPriority(255);
