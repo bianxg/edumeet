@@ -81,7 +81,7 @@ class Filmstrip extends React.PureComponent
 	}
 
 	state = {
-		lastSpeaker : null
+		// lastSpeaker : null
 	};
 
 	// Find the name of the peer which is currently speaking. This is either
@@ -224,7 +224,7 @@ class Filmstrip extends React.PureComponent
 	{
 		if (prevProps !== this.props)
 		{
-			if (
+			/* if (
 				this.props.activeSpeakerId != null &&
 				this.props.activeSpeakerId !== this.props.myId
 			)
@@ -233,7 +233,7 @@ class Filmstrip extends React.PureComponent
 				this.setState({
 					lastSpeaker : this.props.activeSpeakerId
 				});
-			}
+			} */
 
 			this.updateDimensions();
 		}
