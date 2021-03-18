@@ -1,4 +1,4 @@
-import Logger from '../../Logger';
+// import Logger from '../../Logger';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -19,7 +19,7 @@ const FILMSTRING_PADDING_H = 10;
 
 const FILL_RATE = 0.95;
 
-const logger = new Logger('Filmstrip');
+// const logger = new Logger('Filmstrip');
 
 const styles = () =>
 	({
@@ -237,14 +237,14 @@ class Filmstrip extends React.PureComponent
 					lastSpeaker : this.props.activeSpeakerId
 				});
 			} */
-			const {
+			/* const {
 				peers,
 				spotlights
 			} = this.props;
 
 			const names = spotlights.map((id) => peers[id].displayName);
 
-			logger.debug('spotlights: %o', names);
+			logger.debug('spotlights: %o', names); */
 
 			this.updateDimensions();
 		}
