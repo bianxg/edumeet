@@ -587,15 +587,22 @@ SpeakerPeer.propTypes =
 	theme                    : PropTypes.object.isRequired
 };
 
-const mapStateToProps = (state, { id }) =>
+const makeMapStateToProps = (initialState, { id }) =>
 {
 	const getPeerConsumers = makePeerConsumerSelector();
 
-	return {
-		peer    : state.peers[id],
-		browser : state.me.browser,
-		...getPeerConsumers(state, id)
+	const mapStateToProps = (state) =>
+	{
+		return {
+			peer           : state.peers[id],
+			...getPeerConsumers(state, id),
+			windowConsumer : state.room.windowConsumer,
+			activeSpeaker  : id === state.room.activeSpeakerId,
+			browser        : state.me.browser
+		};
 	};
+
+	return mapStateToProps;
 };
 
 const mapDispatchToProps = (dispatch) =>
@@ -615,7 +622,7 @@ const mapDispatchToProps = (dispatch) =>
 };
 
 export default withRoomContext(connect(
-	mapStateToProps,
+	makeMapStateToProps,
 	mapDispatchToProps,
 	null,
 	{
@@ -625,6 +632,7 @@ export default withRoomContext(connect(
 				prev.peers === next.peers &&
 				prev.consumers === next.consumers &&
 				prev.room.activeSpeakerId === next.room.activeSpeakerId &&
+				prev.room.windowConsumer === next.room.windowConsumer &&
 				prev.me.browser === next.me.browser
 			);
 		}
