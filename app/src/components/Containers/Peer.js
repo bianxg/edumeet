@@ -13,8 +13,10 @@ import VideoView from '../VideoContainers/VideoView';
 import Tooltip from '@material-ui/core/Tooltip';
 import Fab from '@material-ui/core/Fab';
 import IconButton from '@material-ui/core/IconButton';
-import VolumeUpIcon from '@material-ui/icons/VolumeUp';
-import VolumeOffIcon from '@material-ui/icons/VolumeOff';
+// import VolumeUpIcon from '@material-ui/icons/VolumeUp';
+// import VolumeOffIcon from '@material-ui/icons/VolumeOff';
+import MicIcon from '@material-ui/icons/Mic';
+import MicOffIcon from '@material-ui/icons/MicOff';
 import NewWindowIcon from '@material-ui/icons/OpenInNew';
 import FullScreenIcon from '@material-ui/icons/Fullscreen';
 import Volume from './Volume';
@@ -256,7 +258,8 @@ const Peer = (props) =>
 										defaultMessage : 'Mute audio'
 									})}
 									className={classes.smallContainer}
-									disabled={!micConsumer}
+									// disabled={!micConsumer}
+									disabled='true'
 									color='primary'
 									size='small'
 									onClick={() =>
@@ -267,9 +270,9 @@ const Peer = (props) =>
 									}}
 								>
 									{ micEnabled ?
-										<VolumeUpIcon />
+										<MicIcon />
 										:
-										<VolumeOffIcon />
+										<MicOffIcon />
 									}
 								</IconButton>
 								:
@@ -279,7 +282,8 @@ const Peer = (props) =>
 										defaultMessage : 'Mute audio'
 									})}
 									className={classes.fab}
-									disabled={!micConsumer}
+									// disabled={!micConsumer}
+									disabled='true'
 									color={micEnabled ? 'default' : 'secondary'}
 									size='large'
 									onClick={() =>
@@ -290,9 +294,9 @@ const Peer = (props) =>
 									}}
 								>
 									{ micEnabled ?
-										<VolumeUpIcon />
+										<MicIcon />
 										:
-										<VolumeOffIcon />
+										<MicOffIcon />
 									}
 								</Fab>
 							}
