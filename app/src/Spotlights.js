@@ -37,7 +37,9 @@ export default class Spotlights
 	{
 		logger.debug('addPeerToSpotlight() [peerId:"%s"]', peerId);
 
-		this._selectedSpotlights = [ ...this._selectedSpotlights, peerId ];
+		// this._selectedSpotlights = [ ...this._selectedSpotlights, peerId ];
+		// Add newer selected as speaker
+		this._selectedSpotlights = [ peerId, ...this._selectedSpotlights ];
 		this._spotlightsUpdated();
 	}
 
@@ -101,7 +103,7 @@ export default class Spotlights
 	handleActiveSpeaker(peerId, force = false)
 	{
 		// bxg: Reduce log
-		logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
+		// logger.debug('handleActiveSpeaker() [peerId:"%s"]', peerId);
 
 		const index = this._peerList.indexOf(peerId);
 
