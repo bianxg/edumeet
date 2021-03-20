@@ -1535,6 +1535,11 @@ export default class RoomClient
 				if (this._webcamProducer)
 					await this.disableWebcam();
 
+				/* const canvasElt = document.getElementById('videosource');
+
+				canvasElt.play();
+				const stream = canvasElt.captureStream(25); */
+
 				const stream = await navigator.mediaDevices.getUserMedia(
 					{
 						video :
