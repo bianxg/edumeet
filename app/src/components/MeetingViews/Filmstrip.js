@@ -343,6 +343,10 @@ class Filmstrip extends React.PureComponent
 										</Grid>
 									);
 								}
+								else
+								{
+									return ('');
+								}
 							}
 							else
 							{
