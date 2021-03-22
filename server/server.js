@@ -39,6 +39,8 @@ const interactiveServer = require('./lib/interactiveServer');
 const promExporter = require('./lib/promExporter');
 const { v4: uuidv4 } = require('uuid');
 
+const Mcu = require('./lib/Mcu');
+
 /* eslint-disable no-console */
 console.log('- process.env.DEBUG:', process.env.DEBUG);
 console.log('- config.mediasoup.worker.logLevel:', config.mediasoup.worker.logLevel);
@@ -63,6 +65,9 @@ const rooms = new Map();
 
 // Map of Peer instances indexed by peerId.
 const peers = new Map();
+
+// Map of Mcu instance indexed by socketId
+const mcus =new Map();
 
 // TLS server configuration.
 const tls =
@@ -125,6 +130,7 @@ passport.deserializeUser((user, done) =>
 
 let mainListener;
 let io;
+let mcuio;
 let oidcClient;
 let oidcStrategy;
 let samlStrategy;
@@ -151,6 +157,8 @@ async function run()
 		{
 			await setupAuth();
 		}
+
+		await runMcuServer();
 
 		// Run a mediasoup Worker.
 		await runMediasoupWorkers();
@@ -692,6 +700,8 @@ async function runWebSocketServer()
 
 			const room = await getOrCreateRoom({ roomId });
 
+			room.mcu = getMCU();
+
 			let peer = peers.get(peerId);
 			let returning = false;
 
@@ -761,6 +771,153 @@ async function runWebSocketServer()
 	});
 }
 
+async function runMcuServer()
+{
+	const server = require('http').createServer();
+
+	mcuio = require('socket.io')(server, { serveClient: false });
+
+	server.listen(20009);
+
+	mcuio.on('connection', (socket) =>
+	{
+		socket.on('disconnect', () =>
+		{
+			const conn = mcus.get(socket.id);
+
+			for (const room of rooms.values())
+			{
+				if (room.mcuio === conn)
+				{
+					room.close();
+				}
+			}
+			mcus.delete(socket.id);
+			if (conn)
+			{
+				conn.close();
+			}
+
+			logger.warn('mcu connection disconnected.');
+		});
+
+		let mcu;
+
+		mcu = mcus.get(socket.id);
+		if (!mcu)
+		{
+			mcu = new Mcu({ socket });
+			mcus.set(socket.id, mcu);
+			logger.warn('mcu "%s" connected.', socket.id);
+		}
+
+		socket.on('notification', (msg) =>
+		{
+			const m = msg.method;
+			const data = msg.data;
+
+			if (m !== 'huijian.ind.activatedspeaker')
+			{
+				logger.warn('Receive gw[%s] msg <<<<< %s | %o', socket.id, m, data);
+			}
+
+			if (m === 'huijian.join')
+			{
+				const { confId, displayName, joinpeerId, ismuted, iscameraon, suid } = data;
+				const room = getRoomByConfId(confId);
+				let peer = peers.get(joinpeerId);
+
+				if (!room)
+				{
+					logger.error('huijian.join,but conf id %s has no room.', confId);
+
+					return;
+				}
+
+				if (peer)
+				{
+					logger.warn('huijian.join,but peer %s already exist.', joinpeerId);
+
+					return;
+				}
+
+				peer = new Peer({ id: joinpeerId, roomId: room.id, socket: null });
+				peer.terType = 'HJ_TER';
+				peer.displayName = displayName;
+				peer.audioMuted = ismuted;
+				peer.videoMuted = !iscameraon;
+				peer.suid = suid;
+				peers.set(joinpeerId, peer);
+
+				peer.on('close', () => {
+					peers.delete(joinpeerId);
+				});
+				room.handlePeer({ peer, returning: false });
+
+			}
+			else if (m === 'huijian.hangup')
+			{
+				const { leavepeerId, leavereason, peerId, confId } = data;
+				const peer = peers.get(leavepeerId);
+
+				if (peer)
+				{
+					peer.close(leavereason);
+				}
+				else
+				{
+					logger.warn("huijian.hangup,but peer doesn't exist.");
+				}
+			}
+			else if (m === 'webapp.joinstatus')
+			{
+
+				const { confId, peerId, isok, reason, errorcode } = data;
+				const room = getRoomByConfId(confId);
+				const peer = peers.get(peerId);
+
+				if (room && peer)
+				{
+					if (isok)
+					{
+						peer.hjTransportVideo = data.video;
+						peer.hjTransportAudio = data.audio;
+						peer.hjTransportShare = data.share;
+						room.handlePeer({ peer, returning: false });
+					}
+					else
+					{
+						if (peer.socket)
+						{
+							peer.socket.emit('notification', { method: 'joinHJFail', data: { error: errorcode } });
+						}
+						peer.close();
+					}
+				}
+			}
+			else if (m === 'huijian.confstatus')
+			{
+				const { confId,
+					peerId,
+					confname,
+					confmode,
+					isduovideostart,
+					isconflocked,
+					isforcemute,
+					isdisplaytername,
+					issubtitlestart
+				} = data;
+
+				const peer = peers.get(peerId);
+
+				if (peer && peer.socket) {
+					peer.socket.emit('notification', { method: 'confStatus', data });
+				}
+			}
+		});
+	});
+}
+
 /**
  * Launch as many mediasoup Workers as given in the configuration file.
  */
@@ -821,6 +978,30 @@ async function getOrCreateRoom({ roomId })
 	}
 
 	return room;
+}
+
+function getRoomByConfId(confId)
+{
+	for (const room of rooms.values())
+	{
+		if (room.confId == confId)
+		{
+			return room;
+		}
+	}
+
+	return null;
+}
+
+function getMCU()
+{
+	// TODO:
+	if (mcus.size === 0)
+	{
+		return null;
+	}
+
+	return Array.from(mcus.values())[0];
 }
 
 run();
