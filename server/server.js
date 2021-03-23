@@ -41,6 +41,12 @@ const { v4: uuidv4 } = require('uuid');
 
 const Mcu = require('./lib/Mcu');
 
+const Version =
+{
+	version : '1.0.0',
+	date    : '2021-03-23 14:10'
+};
+
 /* eslint-disable no-console */
 console.log('- process.env.DEBUG:', process.env.DEBUG);
 console.log('- config.mediasoup.worker.logLevel:', config.mediasoup.worker.logLevel);
@@ -130,7 +136,6 @@ passport.deserializeUser((user, done) =>
 
 let mainListener;
 let io;
-let mcuio;
 let oidcClient;
 let oidcStrategy;
 let samlStrategy;
@@ -775,12 +780,13 @@ async function runMcuServer()
 {
 	const server = require('http').createServer();
 
-	mcuio = require('socket.io')(server, { serveClient: false });
+	const mcuio = require('socket.io')(server, { serveClient: false });
 
 	server.listen(20009);
 
 	mcuio.on('connection', (socket) =>
 	{
+		logger.warn('mcu connecttion %o', socket.handshake.query);
 		socket.on('disconnect', () =>
 		{
 			const conn = mcus.get(socket.id);
@@ -809,6 +815,12 @@ async function runMcuServer()
 			mcu = new Mcu({ socket });
 			mcus.set(socket.id, mcu);
 			logger.warn('mcu "%s" connected.', socket.id);
+
+			mcu.mcuReady({
+				localport : config.listeningPort,
+				localip   : config.mediasoup.webRtcTransport.listenIps[0].ip,
+				version   : Version.version
+			});
 		}
 
 		socket.on('notification', (msg) =>

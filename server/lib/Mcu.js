@@ -76,7 +76,11 @@ class Mcu
 		{
 			try
 			{
-				return await this._sendRequest(method, data);
+				const result = await this._sendRequest(method, data);
+
+				logger.warn('Got mcu[%s]:%s response <<<<< %o', this._socket.id, method, result);
+
+				return result;
 			}
 			catch (error)
 			{
@@ -90,6 +94,12 @@ class Mcu
 			}
 		}
 	}
+
+	async mcuReady(data)
+	{
+		return await this._request('mcu.ready', data);
+	}
+
 
 	async webappJoin(data)
 	{
