@@ -293,6 +293,8 @@ class Room extends EventEmitter
 
 		this._handleLobby();
 		this._handleAudioLevelObserver();
+
+		this._mcu = null;
 	}
 
 	isLocked()
@@ -345,6 +347,8 @@ class Room extends EventEmitter
 		this._mediasoupRouters.clear();
 
 		this._audioLevelObserver = null;
+
+		this._mcu = null;
 
 		// Emit 'close' event.
 		this.emit('close');
@@ -553,6 +557,11 @@ class Room extends EventEmitter
 		};
 	}
 
+	set mcu(mcu)
+	{
+		this._mcu = mcu;
+	}
+
 	get id()
 	{
 		return this._roomId;
@@ -610,6 +619,19 @@ class Room extends EventEmitter
 
 			// Assign routerId
 			peer.routerId = await this._getRouterId();
+
+			if (this._mcu)
+			{
+				const webappJoinOpts =
+				{
+					roomId     : this._roomId,
+					peerId     : peer.id,
+					audioMuted : false, // TODO: should get from webapp
+					videoMuted : false
+				};
+
+				this._mcu.webappJoin(webappJoinOpts);
+			}
 
 			this._handlePeer(peer);
 
@@ -1820,10 +1842,10 @@ class Room extends EventEmitter
 		let consumer;
 
 		// bxg
-		let appData = { producerId: producer.id,
-			producerPeerId: producerPeer.id,
-			peerId: consumerPeer.id,
-			source: producer.appData.source };
+		let appData = { producerId     : producer.id,
+			producerPeerId : producerPeer.id,
+			peerId         : consumerPeer.id,
+			source         : producer.appData.source };
 
 		try
 		{
@@ -1833,20 +1855,20 @@ class Room extends EventEmitter
 			if (producer.kind !== 'video') {
 				consumer = await transport.consume(
 					{
-						producerId: producer.id,
-						rtpCapabilities: consumerPeer.rtpCapabilities,
-						paused: producer.kind === 'video',
-						appData: appData
+						producerId      : producer.id,
+						rtpCapabilities : consumerPeer.rtpCapabilities,
+						paused          : producer.kind === 'video',
+						appData         : appData
 					});
 			}
 			else {
 				consumer = await transport.consume(
 					{
-						producerId: producer.id,
-						rtpCapabilities: consumerPeer.rtpCapabilities,
-						paused: true,
-						preferredLayers: { spatialLayer: 0 },
-						appData: appData
+						producerId      : producer.id,
+						rtpCapabilities : consumerPeer.rtpCapabilities,
+						paused          : true,
+						preferredLayers : { spatialLayer: 0 },
+						appData         : appData
 					});
 			}
 
@@ -2185,10 +2207,10 @@ class Room extends EventEmitter
 		{
 			logger.info('Producer "%s" set max layer %d->%d', producerPeer.displayName, producer.appData.maxLayer, newMaxLayer);
 			this._notification(producerPeer.socket, 'router:setMaxLayer', {
-				producerId: producerId,
-				kind: producer.kind,
-				source: producer.appData.source,
-				maxLayer: newMaxLayer});
+				producerId : producerId,
+				kind       : producer.kind,
+				source     : producer.appData.source,
+				maxLayer   : newMaxLayer});
 			producer.appData.maxLayer = newMaxLayer;
 		}
 	}
@@ -2220,10 +2242,10 @@ class Room extends EventEmitter
 		{
 			logger.info('Producer "%s" set max layer %d->%d', producerPeer.displayName, producer.appData.maxLayer, newMaxLayer);
 			this._notification(producerPeer.socket, 'router:setMaxLayer', {
-				producerId: producerId,
-				kind: producer.kind,
-				source: producer.appData.source,
-				maxLayer: newMaxLayer});
+				producerId : producerId,
+				kind       : producer.kind,
+				source     : producer.appData.source,
+				maxLayer   : newMaxLayer});
 			producer.appData.maxLayer = newMaxLayer;
 		}
 	}
@@ -2264,10 +2286,10 @@ class Room extends EventEmitter
 		{
 			logger.info('Producer "%s" set max layer %d->%d', producerPeer.displayName, producer.appData.maxLayer, newMaxLayer);
 			this._notification(producerPeer.socket, 'router:setMaxLayer', {
-				producerId: producerId,
-				kind: producer.kind,
-				source: producer.appData.source,
-				maxLayer: newMaxLayer});
+				producerId : producerId,
+				kind       : producer.kind,
+				source     : producer.appData.source,
+				maxLayer   : newMaxLayer});
 			producer.appData.maxLayer = newMaxLayer;
 		}
 	}

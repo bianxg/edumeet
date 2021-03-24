@@ -2,7 +2,7 @@ const Logger = require('./Logger');
 const config = require('../config/config');
 const { SocketTimeoutError } = require('./errors');
 
-const logger = new Logger('Mcu');
+const logger = new Logger('MCU');
 
 class Mcu
 {
@@ -66,32 +66,19 @@ class Mcu
 
 	async _request(method, data)
 	{
-		logger.debug('_request() [method:"%s", data:"%o"]', method, data);
+		logger.debug('request >>>>> [method:"%s", data:"%o"]', method, data);
 
-		const {
-			requestRetries = 3
-		} = config;
-
-		for (let tries = 0; tries < requestRetries; tries++)
+		try
 		{
-			try
-			{
-				const result = await this._sendRequest(method, data);
+			const result = await this._sendRequest(method, data);
 
-				logger.warn('Got mcu[%s]:%s response <<<<< %o', this._socket.id, method, result);
+			logger.debug('response <<<<< [method:"%s", data:"%o"]', method, result);
 
-				return result;
-			}
-			catch (error)
-			{
-				if (
-					error instanceof SocketTimeoutError &&
-					tries < requestRetries
-				)
-					logger.warn('_request() | timeout, retrying [attempt:"%s"]', tries);
-				else
-					throw error;
-			}
+			return result;
+		}
+		catch (error)
+		{
+			logger.warn('_request(%s) error:%o', method, error);
 		}
 	}
 
@@ -99,7 +86,6 @@ class Mcu
 	{
 		return await this._request('mcu.ready', data);
 	}
-
 
 	async webappJoin(data)
 	{

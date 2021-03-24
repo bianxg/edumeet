@@ -1,6 +1,6 @@
 const debug = require('debug');
 
-const APP_NAME = 'edumeet-server';
+const APP_NAME = 'edumeet';
 
 class Logger
 {

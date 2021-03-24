@@ -54,7 +54,7 @@ const intl = createIntl();
 	debug.enable('edumeet* *WARN* *ERROR*');
 }*/
 
-debug.enable('edumeet* *WARN* *ERROR*');
+debug.enable('* -engine* -socket* -RIE* *WARN* *ERROR*');
 
 const logger = new Logger();
 
