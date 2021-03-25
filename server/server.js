@@ -883,28 +883,18 @@ async function runMcuServer()
 			}
 			else if (m === 'webapp.joinstatus')
 			{
-
-				const { confId, peerId, isok, reason, errorcode } = data;
-				const room = getRoomByConfId(confId);
+				const { peerId } = data;
 				const peer = peers.get(peerId);
 
-				if (room && peer)
+				if (peer)
 				{
-					if (isok)
-					{
-						peer.hjTransportVideo = data.video;
-						peer.hjTransportAudio = data.audio;
-						peer.hjTransportShare = data.share;
-						room.handlePeer({ peer, returning: false });
-					}
-					else
-					{
-						if (peer.socket)
-						{
-							peer.socket.emit('notification', { method: 'joinHJFail', data: { error: errorcode } });
-						}
-						peer.close();
-					}
+					peer.mcuTransportVideo = data.transportVideo;
+					peer.mcuTransportAudio = data.transportAudio;
+					peer.mcuTransportShare = data.transportShare;
+				}
+				else
+				{
+					logger.warn("webapp.joinstatus,but peer doesn't exist.");
 				}
 			}
 			else if (m === 'huijian.confstatus')

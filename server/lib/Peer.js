@@ -54,6 +54,11 @@ class Peer extends EventEmitter
 		this._consumers = new Map();
 
 		this._handlePeer();
+
+		// Test
+		this.mcuTransportVideo ={ ip: '192.168.2.110', port: 10000, rtcpPort: 10001 };
+		this.mcuTransportAudio ={ ip: '192.168.2.110', port: 10002, rtcpPort: 10003 };
+		this.mcuTransportShare ={ ip: '192.168.2.110', port: 10004, rtcpPort: 10005 };
 	}
 
 	close()

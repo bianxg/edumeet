@@ -295,6 +295,7 @@ class Room extends EventEmitter
 		this._handleAudioLevelObserver();
 
 		this._mcu = null;
+		this._hjConsumers=new Map();
 	}
 
 	isLocked()
@@ -352,6 +353,28 @@ class Room extends EventEmitter
 
 		// Emit 'close' event.
 		this.emit('close');
+	}
+
+	requestKeyFrame(peer, type)
+	{
+		if (!peer)
+			return;
+
+		if (type === 1 || type === 2)
+		{
+			const producer = type === 1 ? peer.getVideoProducer() : peer.getShareProducer();
+
+			if (producer)
+			{
+				const consumer = this._getHJConsumerByProducerId(producer.id);
+
+				if (consumer)
+				{
+					consumer.requestKeyFrame();
+					logger.warn(`Request peer '${peer.id}' ${type === 1 ? 'video' : 'screen'} producer key frame.`);
+				}
+			}
+		}
 	}
 
 	verifyPeer({ id, token })
@@ -596,6 +619,11 @@ class Room extends EventEmitter
 		return Object.keys(this._peers).length === 0;
 	}
 
+	_getHJConsumerByProducerId(producerId)
+	{
+		return Array.from(this._hjConsumers.values()).find((consumer) => consumer.producerId===producerId);
+	}
+
 	_parkPeer(parkPeer)
 	{
 		this._lobby.parkPeer(parkPeer);
@@ -775,7 +803,8 @@ class Room extends EventEmitter
 		peer.socket.on('request', (request, cb) =>
 		{
 			// bxg: reduce log
-			if (!(request.method === "getTransportStats")) {
+			if (!(request.method === 'getTransportStats'))
+			{
 				logger.debug(
 					'Peer "request" event [method:"%s", peerId:"%s"]',
 					request.method, peer.id);
@@ -1070,7 +1099,7 @@ class Room extends EventEmitter
 				// the 'loudest' event of the audioLevelObserver.
 				// appData = { ...appData, peerId: peer.id };
 				// bxg
-				appData = { ...appData, peerId: peer.id, transportId: transportId};
+				appData = { ...appData, peerId: peer.id, transportId: transportId };
 
 				const producer =
 					await transport.produce({ kind, rtpParameters, appData });
@@ -1126,6 +1155,9 @@ class Room extends EventEmitter
 
 				// bxg
 				this._onNewProducer(peer, producer);
+
+				// Create consumer for MCU
+				this._createConsumerForMCU(peer, producer);
 
 				break;
 			}
@@ -1207,7 +1239,7 @@ class Room extends EventEmitter
 				cb();
 
 				// bxg
-				this._onConsumerPause(peer,consumer);
+				this._onConsumerPause(peer, consumer);
 				break;
 			}
 
@@ -1249,8 +1281,9 @@ class Room extends EventEmitter
 				cb();
 
 				const lastLayer = consumer.appData.preferLayer;
+
 				consumer.appData.preferLayer = spatialLayer;
-				this._onConsumerPreferLayerChange(peer, consumer,lastLayer)
+				this._onConsumerPreferLayerChange(peer, consumer, lastLayer);
 
 				break;
 			}
@@ -1842,7 +1875,7 @@ class Room extends EventEmitter
 		let consumer;
 
 		// bxg
-		let appData = { producerId     : producer.id,
+		const appData = { producerId     : producer.id,
 			producerPeerId : producerPeer.id,
 			peerId         : consumerPeer.id,
 			source         : producer.appData.source };
@@ -1852,7 +1885,8 @@ class Room extends EventEmitter
 			// bxg: fix when the first peer can not receive video from the second peer 
 			// Reproduce condition: 1 on some host; 2 the second peer join with both audio and video
 			// This may be a bug of mediasoup RTC part.
-			if (producer.kind !== 'video') {
+			if (producer.kind !== 'video')
+			{
 				consumer = await transport.consume(
 					{
 						producerId      : producer.id,
@@ -1861,7 +1895,8 @@ class Room extends EventEmitter
 						appData         : appData
 					});
 			}
-			else {
+			else
+			{
 				consumer = await transport.consume(
 					{
 						producerId      : producer.id,
@@ -1954,7 +1989,7 @@ class Room extends EventEmitter
 
 			// Now that we got the positive response from the remote Peer and, if
 			// video, resume the Consumer to ask for an efficient key frame.
-			if ( !(producer.kind === 'video' && producer.appData.source === 'webcam') )
+			if (!(producer.kind === 'video' && producer.appData.source === 'webcam'))
 				await consumer.resume();
 
 			this._notification(
@@ -1966,12 +2001,128 @@ class Room extends EventEmitter
 				}
 			);
 
-			this._onNewConsumer(consumerPeer, producerPeer, producer,consumer);
+			this._onNewConsumer(consumerPeer, producerPeer, producer, consumer);
 		}
 		catch (error)
 		{
 			logger.warn('_createConsumer() | [error:"%o"]', error);
 		}
+	}
+
+	/*
+	 * Creates a mediasoup Consumer for the given mediasoup Producer.
+	 *
+	 * @async
+	 */
+	async _createConsumerForMCU(peer, producer)
+	{
+		const router = this._mediasoupRouters.get(peer.routerId);
+		const transportOpt =
+		{
+			listenIp : config.mediasoup.webRtcTransport.listenIps[0],
+			rtcpMux  : false,
+			comedia  : false,
+			appData  : { producing: false, consuming: true }
+		};
+		const transport = await router.createPlainTransport(
+			transportOpt
+		);
+
+		if (producer.appData.source === 'mic') // Audio
+		{
+			transport.connect({
+				ip       : peer.mcuTransportAudio.ip,
+				port     : peer.mcuTransportAudio.port,
+				rtcpPort : peer.mcuTransportAudio.rtcpPort
+			});
+		}
+		else if (producer.appData.source === 'webcam') // video
+		{
+			transport.connect({
+				ip       : peer.mcuTransportVideo.ip,
+				port     : peer.mcuTransportVideo.port,
+				rtcpPort : peer.mcuTransportVideo.rtcpPort
+			});
+		}
+		if (producer.appData.source=='screen') // share
+		{
+			// Notify MCU webapp start desktop share
+			this._mcu.webappShare({
+				peerId : peer.id,
+				roomId : this._roomId,
+				share  : true
+			});
+			transport.connect({
+				ip       : peer.mcuTransportShare.ip,
+				port     : peer.mcuTransportShare.port,
+				rtcpPort : peer.mcuTransportShare.rtcpPort
+			});
+		}
+
+		let consumer;
+
+		try
+		{
+			consumer = await transport.consume(
+				{
+					producerId      : producer.id,
+					rtpCapabilities : router.rtpCapabilities,
+					paused          : false,
+					appData         : {
+						type   : 'HJ',
+						source : producer.appData.source,
+						from   : producer.appData.createdBy==='HJ'?'HJ':'WEB'
+					}
+				});
+
+			if (producer.kind === 'audio')
+				await consumer.setPriority(255);
+		}
+		catch (error)
+		{
+			logger.warn('_createConsumerForMCU() | [error:"%o"]', error);
+
+			return;
+		}
+
+		this._hjConsumers.set(consumer.id, consumer);
+
+		consumer.on('producerclose', () =>
+		{
+			this._hjConsumers.delete(consumer.id);
+			consumer.close();
+			transport.close();
+		});
+
+		consumer.on('producerpause', () =>
+		{
+			// this._notification(consumerPeer.socket, 'consumerPaused', { consumerId: consumer.id });
+		});
+
+		consumer.on('producerresume', () =>
+		{
+			// this._notification(consumerPeer.socket, 'consumerResumed', { consumerId: consumer.id });
+		});
+
+		consumer.on('score', (score) =>
+		{
+			// this._notification(consumerPeer.socket, 'consumerScore', { consumerId: consumer.id, score });
+		});
+
+		consumer.on('layerschange', (layers) =>
+		{
+			/*
+			this._notification(
+				consumerPeer.socket,
+				'consumerLayersChanged',
+				{
+					consumerId    : consumer.id,
+					spatialLayer  : layers ? layers.spatialLayer : null,
+					temporalLayer : layers ? layers.temporalLayer : null
+				}
+			);
+			*/
+		});
 	}
 
 	_hasPermission(peer, permission)
@@ -2177,7 +2328,6 @@ class Room extends EventEmitter
 			);
 	}
 
-	
 	_onConsumerPause(peer, consumer)
 	{
 		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
@@ -2185,9 +2335,11 @@ class Room extends EventEmitter
 		const producerId = consumer.producerId;
 		const producerPeerId = consumer.appData.producerPeerId;
 		const producerPeer = this._peers[producerPeerId];
+
 		if (!producerPeer)
 			return;
 		const producer = producerPeer.getProducer(producerId);
+
 		if (!producer)
 			return;
 		logger.info('Consumer "%s" pause producer "%s"', peer.displayName, producerPeer.displayName);
@@ -2198,6 +2350,7 @@ class Room extends EventEmitter
 			producer.appData.layer2 -= 1;
 
 		let newMaxLayer = 0;
+
 		if (producer.appData.layer2 > 0)
 			newMaxLayer = 2;
 		else if (producer.appData.layer1 > 0)
@@ -2210,29 +2363,33 @@ class Room extends EventEmitter
 				producerId : producerId,
 				kind       : producer.kind,
 				source     : producer.appData.source,
-				maxLayer   : newMaxLayer});
+				maxLayer   : newMaxLayer });
 			producer.appData.maxLayer = newMaxLayer;
 		}
 	}
 
-	_onConsumerResume(peer, consumer) {
+	_onConsumerResume(peer, consumer)
+	{
 		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
 			return;
 		const producerId = consumer.producerId;
 		const producerPeerId = consumer.appData.producerPeerId;
 		const producerPeer = this._peers[producerPeerId];
+
 		if (!producerPeer)
 			return;
 		const producer = producerPeer.getProducer(producerId);
+
 		if (!producer)
 			return;
-		
+
 		logger.info('Consumer "%s" resume producer "%s"', peer.displayName, producerPeer.displayName);
 		if (consumer.appData.preferLayer === 1)
 			producer.appData.layer1 += 1;
 		else if (consumer.appData.preferLayer === 2)
 			producer.appData.layer2 += 1;
 		let newMaxLayer = 0;
+
 		if (producer.appData.layer2 > 0)
 			newMaxLayer = 2;
 		else if (producer.appData.layer1 > 0)
@@ -2245,21 +2402,23 @@ class Room extends EventEmitter
 				producerId : producerId,
 				kind       : producer.kind,
 				source     : producer.appData.source,
-				maxLayer   : newMaxLayer});
+				maxLayer   : newMaxLayer });
 			producer.appData.maxLayer = newMaxLayer;
 		}
 	}
 
-	_onConsumerPreferLayerChange(peer, consumer,lastLayer)
+	_onConsumerPreferLayerChange(peer, consumer, lastLayer)
 	{
 		if (consumer.kind !== 'video' || consumer.appData.source !== 'webcam')
 			return;
 		const producerId = consumer.producerId;
 		const producerPeerId = consumer.appData.producerPeerId;
 		const producerPeer = this._peers[producerPeerId];
+
 		if (!producerPeer)
 			return;
 		const producer = producerPeer.getProducer(producerId);
+
 		if (!producer)
 			return;
 
@@ -2277,6 +2436,7 @@ class Room extends EventEmitter
 			producer.appData.layer2 += 1;
 
 		let newMaxLayer = 0;
+
 		if (producer.appData.layer2 > 0)
 			newMaxLayer = 2;
 		else if (producer.appData.layer1 > 0)
@@ -2289,7 +2449,7 @@ class Room extends EventEmitter
 				producerId : producerId,
 				kind       : producer.kind,
 				source     : producer.appData.source,
-				maxLayer   : newMaxLayer});
+				maxLayer   : newMaxLayer });
 			producer.appData.maxLayer = newMaxLayer;
 		}
 	}

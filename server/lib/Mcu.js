@@ -66,13 +66,13 @@ class Mcu
 
 	async _request(method, data)
 	{
-		logger.debug('request >>>>> [method:"%s", data:"%o"]', method, data);
+		logger.debug('>>>>> [method:"%s", data:"%o"]', method, data);
 
 		try
 		{
 			const result = await this._sendRequest(method, data);
 
-			logger.debug('response <<<<< [method:"%s", data:"%o"]', method, result);
+			logger.debug('<<<<< [method:"%s", data:"%o"]', method, result);
 
 			return result;
 		}
