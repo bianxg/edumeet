@@ -2016,6 +2016,11 @@ class Room extends EventEmitter
 	 */
 	async _createConsumerForMCU(peer, producer)
 	{
+		if (!this._mcu)
+			return;
+		logger.debug(
+			'_createConsumerForMCU() [peer:"%s", producer:"%s"]',
+			peer.id, producer.id);
 		const router = this._mediasoupRouters.get(peer.routerId);
 		const transportOpt =
 		{
@@ -2063,17 +2068,39 @@ class Room extends EventEmitter
 
 		try
 		{
-			consumer = await transport.consume(
-				{
-					producerId      : producer.id,
-					rtpCapabilities : router.rtpCapabilities,
-					paused          : false,
-					appData         : {
-						type   : 'HJ',
-						source : producer.appData.source,
-						from   : producer.appData.createdBy==='HJ'?'HJ':'WEB'
-					}
-				});
+			// bxg
+			const appData =
+			{
+				producerId     : producer.id,
+				producerPeerId : peer.id,
+				peerId         : peer.id, // ?
+				source         : producer.appData.source
+			};
+
+			if (producer.kind !== 'video' || producer.appData.source !== 'webcam')
+			{
+				consumer = await transport.consume(
+					{
+						producerId      : producer.id,
+						rtpCapabilities : router.rtpCapabilities,
+						paused          : false,
+						appData         : appData
+					});
+			}
+			else
+			{
+				consumer = await transport.consume(
+					{
+						producerId      : producer.id,
+						rtpCapabilities : router.rtpCapabilities,
+						paused          : false,
+						preferredLayers : { spatialLayer: 2 },
+						appData         : appData
+					});
+				consumer.appData.preferLayer = 2;
+				this._onConsumerResume(peer, consumer);
+				logger.debug('_createConsumerForMCU() | [consumer:"%o"]', consumer);
+			}
 
 			if (producer.kind === 'audio')
 				await consumer.setPriority(255);

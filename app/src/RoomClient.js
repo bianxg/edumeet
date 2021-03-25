@@ -1587,6 +1587,7 @@ export default class RoomClient
 								spatialLayer : 0
 							}
 						});
+					this.setMaxSendingSpatialLayerInit();
 				}
 				else
 				{
@@ -2123,6 +2124,8 @@ export default class RoomClient
 	async setMaxSendingSpatialLayerInit()
 	{
 		if (!this._webcamProducer)
+			return;
+		if (this._webcamProducer.appData.spatialLayerInit)
 			return;
 
 		logger.debug('setMaxSendingSpatialLayerInit()');
