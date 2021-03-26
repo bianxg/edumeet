@@ -2077,12 +2077,18 @@ class Room extends EventEmitter
 				source         : producer.appData.source
 			};
 
+			const rtpCapabilities = { ...router.rtpCapabilities };
+
+			rtpCapabilities.headerExtensions = rtpCapabilities.headerExtensions
+				.filter((ext) => ext.uri !== 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time' &&
+					ext.uri !== 'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01');
+
 			if (producer.kind !== 'video' || producer.appData.source !== 'webcam')
 			{
 				consumer = await transport.consume(
 					{
 						producerId      : producer.id,
-						rtpCapabilities : router.rtpCapabilities,
+						rtpCapabilities : rtpCapabilities,
 						paused          : false,
 						appData         : appData
 					});
@@ -2092,14 +2098,14 @@ class Room extends EventEmitter
 				consumer = await transport.consume(
 					{
 						producerId      : producer.id,
-						rtpCapabilities : router.rtpCapabilities,
+						rtpCapabilities : rtpCapabilities,
 						paused          : false,
 						preferredLayers : { spatialLayer: 2 },
 						appData         : appData
 					});
 				consumer.appData.preferLayer = 2;
 				this._onConsumerResume(peer, consumer);
-				logger.debug('_createConsumerForMCU() | [consumer:"%o"]', consumer);
+				// logger.debug('_createConsumerForMCU() | [consumer:"%o"]', consumer);
 			}
 
 			if (producer.kind === 'audio')
