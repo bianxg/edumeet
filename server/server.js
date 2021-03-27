@@ -833,52 +833,49 @@ async function runMcuServer()
 				logger.warn('Receive gw[%s] msg <<<<< %s | %o', socket.id, m, data);
 			}
 
-			if (m === 'huijian.join')
+			if (m === 'mcu.join')
 			{
-				const { confId, displayName, joinpeerId, ismuted, iscameraon, suid } = data;
-				const room = getRoomByConfId(confId);
-				let peer = peers.get(joinpeerId);
+				const { roomId, displayName, peerId } = data;
+				const room = rooms.get(roomId);
+				let peer = peers.get(peerId);
 
 				if (!room)
 				{
-					logger.error('huijian.join,but conf id %s has no room.', confId);
+					logger.error('mcu.join,but has no room %s.', roomId);
 
 					return;
 				}
 
 				if (peer)
 				{
-					logger.warn('huijian.join,but peer %s already exist.', joinpeerId);
+					logger.warn('mcu.join,but peer %s already exist.', peerId);
 
 					return;
 				}
 
-				peer = new Peer({ id: joinpeerId, roomId: room.id, socket: null });
-				peer.terType = 'HJ_TER';
+				peer = new Peer({ id: peerId, roomId: roomId, socket: null });
+				peer.terType = 'MCU';
 				peer.displayName = displayName;
-				peer.audioMuted = ismuted;
-				peer.videoMuted = !iscameraon;
-				peer.suid = suid;
-				peers.set(joinpeerId, peer);
+				peers.set(peerId, peer);
 
-				peer.on('close', () => {
-					peers.delete(joinpeerId);
+				peer.on('close', () =>
+				{
+					peers.delete(peerId);
 				});
-				room.handlePeer({ peer, returning: false });
-
+				room.handleMCUPeer({ peer });
 			}
-			else if (m === 'huijian.hangup')
+			else if (m === 'mcu.hangup')
 			{
-				const { leavepeerId, leavereason, peerId, confId } = data;
-				const peer = peers.get(leavepeerId);
+				const { peerId, reason } = data;
+				const peer = peers.get(peerId);
 
 				if (peer)
 				{
-					peer.close(leavereason);
+					peer.close(reason);
 				}
 				else
 				{
-					logger.warn("huijian.hangup,but peer doesn't exist.");
+					logger.warn("mcu.hangup,but peer doesn't exist.");
 				}
 			}
 			else if (m === 'webapp.joinstatus')

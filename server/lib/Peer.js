@@ -59,6 +59,8 @@ class Peer extends EventEmitter
 		this.mcuTransportVideo ={ ip: '192.168.2.110', port: 10000, rtcpPort: 10001 };
 		this.mcuTransportAudio ={ ip: '192.168.2.110', port: 10002, rtcpPort: 10003 };
 		this.mcuTransportShare ={ ip: '192.168.2.110', port: 10004, rtcpPort: 10005 };
+
+		this._terType = null;
 	}
 
 	close()
@@ -299,6 +301,16 @@ class Peer extends EventEmitter
 		return this._consumers;
 	}
 
+	get terType()
+	{
+		return this._terType;
+	}
+
+	set terType(terType)
+	{
+		this._terType=terType;
+	}
+
 	addRole(newRole)
 	{
 		if (
@@ -398,6 +410,11 @@ class Peer extends EventEmitter
 		};
 
 		return peerInfo;
+	}
+
+	isMCU()
+	{
+		return this._terType === 'MCU';
 	}
 }
 

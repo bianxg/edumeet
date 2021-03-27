@@ -61,6 +61,8 @@ const roomAllowWhenRoleMissing = config.allowWhenRoleMissing || [];
 
 const ROUTER_SCALE_SIZE = config.routerScaleSize || 40;
 
+let baseSSRC = 10000;
+
 class Room extends EventEmitter
 {
 
@@ -395,6 +397,21 @@ class Room extends EventEmitter
 		return false;
 	}
 
+	handleMCUPeer({ peer })
+	{
+		logger.info('handleMCUPeer() [peer:"%s"]', peer.id);
+
+		// Should not happen
+		if (this._peers[peer.id])
+		{
+			logger.warn(
+				'handleMCUPeer() | there is already a peer with same peerId [peer:"%s"]',
+				peer.id);
+		}
+
+		this._mcuJoining(peer);
+	}
+
 	handlePeer({ peer, returning })
 	{
 		logger.info('handlePeer() [peer:"%s", roles:"%s", returning:"%s"]', peer.id, peer.roles, returning);
@@ -633,6 +650,25 @@ class Room extends EventEmitter
 			this._notification(peer.socket, 'parkedPeer', { peerId: parkPeer.id });
 		}
 	}
+	_mcuJoining(peer)
+	{
+		this._queue.push(async () =>
+		{
+			// If we don't have this peer, add to end
+			!this._lastN.includes(peer.id) && this._lastN.push(peer.id);
+
+			this._peers[peer.id] = peer;
+
+			// Assign routerId
+			peer.routerId = await this._getRouterId();
+
+			this._handleMCUPeer(peer);
+		})
+			.catch((error) =>
+			{
+				logger.error('_mcuJoining() [error:"%o"]', error);
+			});
+	}
 
 	_peerJoining(peer, returning = false)
 	{
@@ -725,6 +761,189 @@ class Room extends EventEmitter
 			{
 				logger.error('_peerJoining() [error:"%o"]', error);
 			});
+	}
+	async _handleMCUPeer(peer)
+	{
+		logger.debug('_handleMCUPeer() [peer:"%s"]', peer.id);
+
+		peer.on('close', () =>
+		{
+			this._handlePeerClose(peer);
+		});
+
+		peer.socket.on('request', (request, cb) =>
+		{
+			this._handleSocketRequest(peer, request, cb)
+				.catch((error) =>
+				{
+					logger.error('"request" failed [error:"%o"]', error);
+
+					cb(error);
+				});
+		});
+
+		const videoPt = 101;
+		const sharePt = 102;
+		const videoSsrc = (++baseSSRC);
+		const shareSsrc = (++baseSSRC);
+		const router = this._mediasoupRouters.get(peer.routerId);
+		// peer.rtpCapabilities = router.rtpCapabilities;
+		// 添加producers的plain transport
+		const transportOpt =
+		{
+			listenIp : config.mediasoup.webRtcTransport.listenIps[0],
+			rtcpMux  : false,
+			comedia  : true,
+			appData  : { producing: true, consuming: false }
+		};
+
+		const produceVideoTransport = await router.createPlainTransport(
+			transportOpt
+		);
+
+		peer.addTransport(produceVideoTransport.id, produceVideoTransport);
+
+		const produceShareTransport = await router.createPlainTransport({
+			...transportOpt,
+			appData : { producing: true, consuming: false, source: 'screen' }
+		});
+
+		peer.addTransport(produceShareTransport.id, produceShareTransport);
+
+		peer.shareSsrc=shareSsrc; // 记录共享流的SSRC
+
+		const videoProducer=await produceVideoTransport.produce(
+			{
+				kind          : 'video',
+				rtpParameters :
+				{
+					codecs : [
+						{
+							mimeType    : 'video/h264',
+							payloadType : videoPt,
+							clockRate   : 90000,
+							parameters  :
+							{
+								'level-asymmetry-allowed' : 1,
+								'packetization-mode'      : 1,
+								'profile-level-id'        : '42e01f'
+							},
+							'rtcpFeedback' : [
+								{
+									'type'      : 'transport-cc',
+									'parameter' : ''
+								},
+								{
+									'type'      : 'ccm',
+									'parameter' : 'fir'
+								},
+								{
+									'type'      : 'nack',
+									'parameter' : 'pli'
+								}
+							]
+						}
+					],
+					'headerExtensions' : [
+						{
+							'uri'        : 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time',
+							'id'         : 2,
+							'encrypt'    : false,
+							'parameters' : {
+
+							}
+						},
+						{
+							'uri'        : 'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01',
+							'id'         : 3,
+							'encrypt'    : false,
+							'parameters' : {
+
+							}
+						}
+					]
+				},
+				appData :
+				{
+					source    : 'webcam',
+					createdBy : 'HJ'
+				}
+			}
+		);
+
+		// pipe到其他的router
+		const pipeRouters = this._getRoutersToPipeTo(router.id);
+
+		for (const [ routerId, destinationRouter ] of this._mediasoupRouters)
+		{
+			if (pipeRouters.includes(routerId))
+			{
+				if (destinationRouter._producers.has(videoProducer.id)) {
+					continue;
+				}
+				await router.pipeToRouter({
+					producerId : videoProducer.id,
+					router     : destinationRouter
+				});
+			}
+		}
+
+		peer.addProducer(videoProducer.id, videoProducer);
+		peer.joined = true;
+
+		const otherPeers = this._getJoinedPeers(peer);
+
+		for (const otherPeer of otherPeers)
+		{
+			if (!otherPeer.isMCU()) // 只有web的peer需要创建
+			{
+				this._notification(
+					otherPeer.socket,
+					'newPeer',
+					{
+						id          : peer.id,
+						audioMuted  : peer.audioMuted,
+						videoMuted  : peer.videoMuted,
+						displayName : peer.displayName,
+						picture     : null,
+						roles       : peer.roles
+					}
+				);
+
+				if (!peer.videoMuted)
+				{
+					this._createConsumer(
+						{
+							consumerPeer : otherPeer,
+							producerPeer : peer,
+							producer     : videoProducer
+						});
+				}
+			}
+		}
+
+		this._mcu.huijianRspJoin(
+			{
+				confId : this._confId,
+				peerId : peer.id,
+				video  : {
+					ssrc     : videoSsrc,
+					pt       : videoPt,
+					rtpip    : produceVideoTransport.tuple.localIp,
+					rtpport  : produceVideoTransport.tuple.localPort,
+					rtcpip   : produceVideoTransport.rtcpTuple.localIp,
+					rtcpport : produceVideoTransport.rtcpTuple.localPort
+				},
+				share : {
+					ssrc     : shareSsrc,
+					pt       : sharePt,
+					rtpip    : produceShareTransport.tuple.localIp,
+					rtpport  : produceShareTransport.tuple.localPort,
+					rtcpip   : produceShareTransport.rtcpTuple.localIp,
+					rtcpport : produceShareTransport.rtcpTuple.localPort
+				}
+			}
+		);
 	}
 
 	_handlePeer(peer)
