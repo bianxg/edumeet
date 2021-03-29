@@ -835,9 +835,12 @@ async function runMcuServer()
 
 			if (m === 'mcu.join')
 			{
-				const { roomId, displayName, peerId } = data;
+				// 每个webapp入会，MCU都会发送mcu.join消息，这里peerId是webapp的
+				// 后面可以去掉这个消息，直接在webapp入会时候实现
+				// 这里创建MCU的produce，给peer创建consumer(MCU发给webapp的媒体流)
+				const { roomId, peerId, mcuId } = data;
 				const room = rooms.get(roomId);
-				let peer = peers.get(peerId);
+				const peer = peers.get(peerId);
 
 				if (!room)
 				{
@@ -846,23 +849,14 @@ async function runMcuServer()
 					return;
 				}
 
-				if (peer)
+				if (!peer)
 				{
-					logger.warn('mcu.join,but peer %s already exist.', peerId);
+					logger.warn('mcu.join,but peer %s is not exist.', peerId);
 
 					return;
 				}
 
-				peer = new Peer({ id: peerId, roomId: roomId, socket: null });
-				peer.terType = 'MCU';
-				peer.displayName = displayName;
-				peers.set(peerId, peer);
-
-				peer.on('close', () =>
-				{
-					peers.delete(peerId);
-				});
-				room.handleMCUPeer({ peer });
+				room.handleMCUPeer({ peer, mcuId });
 			}
 			else if (m === 'mcu.hangup')
 			{
@@ -896,20 +890,23 @@ async function runMcuServer()
 			}
 			else if (m === 'huijian.confstatus')
 			{
-				const { confId,
-					peerId,
-					confname,
-					confmode,
-					isduovideostart,
-					isconflocked,
-					isforcemute,
-					isdisplaytername,
-					issubtitlestart
-				} = data;
+				const
+					{
+						confId,
+						peerId,
+						confname,
+						confmode,
+						isduovideostart,
+						isconflocked,
+						isforcemute,
+						isdisplaytername,
+						issubtitlestart
+					} = data;
 
 				const peer = peers.get(peerId);
 
-				if (peer && peer.socket) {
+				if (peer && peer.socket)
+				{
 					peer.socket.emit('notification', { method: 'confStatus', data });
 				}
 			}

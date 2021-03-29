@@ -397,19 +397,10 @@ class Room extends EventEmitter
 		return false;
 	}
 
-	handleMCUPeer({ peer })
+	handleMCUPeer({ peer, mcuId })
 	{
 		logger.info('handleMCUPeer() [peer:"%s"]', peer.id);
-
-		// Should not happen
-		if (this._peers[peer.id])
-		{
-			logger.warn(
-				'handleMCUPeer() | there is already a peer with same peerId [peer:"%s"]',
-				peer.id);
-		}
-
-		this._mcuJoining(peer);
+		this._mcuJoining(peer, mcuId);
 	}
 
 	handlePeer({ peer, returning })
@@ -650,19 +641,11 @@ class Room extends EventEmitter
 			this._notification(peer.socket, 'parkedPeer', { peerId: parkPeer.id });
 		}
 	}
-	_mcuJoining(peer)
+	_mcuJoining(peer, mcuId)
 	{
 		this._queue.push(async () =>
 		{
-			// If we don't have this peer, add to end
-			!this._lastN.includes(peer.id) && this._lastN.push(peer.id);
-
-			this._peers[peer.id] = peer;
-
-			// Assign routerId
-			peer.routerId = await this._getRouterId();
-
-			this._handleMCUPeer(peer);
+			this._handleMCUPeer(peer, mcuId);
 		})
 			.catch((error) =>
 			{
@@ -762,25 +745,10 @@ class Room extends EventEmitter
 				logger.error('_peerJoining() [error:"%o"]', error);
 			});
 	}
-	async _handleMCUPeer(peer)
+
+	async _handleMCUPeer(peer, mcuId)
 	{
 		logger.debug('_handleMCUPeer() [peer:"%s"]', peer.id);
-
-		peer.on('close', () =>
-		{
-			this._handlePeerClose(peer);
-		});
-
-		peer.socket.on('request', (request, cb) =>
-		{
-			this._handleSocketRequest(peer, request, cb)
-				.catch((error) =>
-				{
-					logger.error('"request" failed [error:"%o"]', error);
-
-					cb(error);
-				});
-		});
 
 		const videoPt = 101;
 		const sharePt = 102;
@@ -872,6 +840,7 @@ class Room extends EventEmitter
 		);
 
 		// pipe到其他的router
+		/*
 		const pipeRouters = this._getRoutersToPipeTo(router.id);
 
 		for (const [ routerId, destinationRouter ] of this._mediasoupRouters)
@@ -886,45 +855,35 @@ class Room extends EventEmitter
 					router     : destinationRouter
 				});
 			}
-		}
+		} */
 
 		peer.addProducer(videoProducer.id, videoProducer);
 		peer.joined = true;
 
-		const otherPeers = this._getJoinedPeers(peer);
-
-		for (const otherPeer of otherPeers)
-		{
-			if (!otherPeer.isMCU()) // 只有web的peer需要创建
+		this._notification(
+			peer.socket,
+			'newPeer',
 			{
-				this._notification(
-					otherPeer.socket,
-					'newPeer',
-					{
-						id          : peer.id,
-						audioMuted  : peer.audioMuted,
-						videoMuted  : peer.videoMuted,
-						displayName : peer.displayName,
-						picture     : null,
-						roles       : peer.roles
-					}
-				);
-
-				if (!peer.videoMuted)
-				{
-					this._createConsumer(
-						{
-							consumerPeer : otherPeer,
-							producerPeer : peer,
-							producer     : videoProducer
-						});
-				}
+				id          : mcuId,
+				audioMuted  : false,
+				videoMuted  : false,
+				displayName : 'MCU',
+				picture     : null,
+				roles       : null
 			}
-		}
+		);
+
+		this._createMCUConsumer(
+			{
+				consumerPeer   : peer,
+				producerPeerId : mcuId,
+				producer       : videoProducer
+			}
+		);
 
 		this._mcu.huijianRspJoin(
 			{
-				confId : this._confId,
+				roomId : this._roomId,
 				peerId : peer.id,
 				video  : {
 					ssrc     : videoSsrc,
@@ -2219,6 +2178,166 @@ class Room extends EventEmitter
 					score      : consumer.score
 				}
 			);
+		}
+		catch (error)
+		{
+			logger.warn('_createMCUConsumer() | [error:"%o"]', error);
+		}
+	}
+
+	/*
+	 * Creates a mediasoup Consumer for the given mediasoup Producer.
+	 * 将MCU流发给webapp
+	 * @async
+	 */
+	async _createMCUConsumer({ consumerPeer, mcuId, producer })
+	{
+		logger.debug(
+			'_createMCUConsumer() [consumerPeer:"%s", producerPeer:"%s", producer:"%s"]',
+			consumerPeer.id,
+			mcuId,
+			producer.id
+		);
+
+		// Must take the Transport the remote Peer is using for consuming.
+		const transport = consumerPeer.getConsumerTransport();
+
+		// This should not happen.
+		if (!transport)
+		{
+			logger.warn('_createConsumer() | Transport for consuming not found');
+
+			return;
+		}
+
+		// Create the Consumer in paused mode.
+		let consumer;
+
+		// bxg
+		const appData = { producerId     : producer.id,
+			producerPeerId : mcuId,
+			peerId         : consumerPeer.id,
+			source         : producer.appData.source };
+
+		try
+		{
+			// bxg: fix when the first peer can not receive video from the second peer 
+			// Reproduce condition: 1 on some host; 2 the second peer join with both audio and video
+			// This may be a bug of mediasoup RTC part.
+			if (producer.kind !== 'video')
+			{
+				consumer = await transport.consume(
+					{
+						producerId      : producer.id,
+						rtpCapabilities : consumerPeer.rtpCapabilities,
+						paused          : false,
+						appData         : appData
+					});
+			}
+			else
+			{
+				consumer = await transport.consume(
+					{
+						producerId      : producer.id,
+						rtpCapabilities : consumerPeer.rtpCapabilities,
+						paused          : false,
+						appData         : appData
+					});
+			}
+
+			if (producer.kind === 'audio')
+				await consumer.setPriority(255);
+		}
+		catch (error)
+		{
+			logger.warn('_createMCUConsumer() | [error:"%o"]', error);
+
+			return;
+		}
+
+		// Store the Consumer into the consumerPeer data Object.
+		consumerPeer.addConsumer(consumer.id, consumer);
+
+		// Set Consumer events.
+		consumer.on('transportclose', () =>
+		{
+			// Remove from its map.
+			consumerPeer.removeConsumer(consumer.id);
+
+			// UnReference the producer of consumer
+			if (!consumer.paused)
+				this._onConsumerPause(consumerPeer, consumer);
+		});
+
+		consumer.on('producerclose', () =>
+		{
+			// Remove from its map.
+			consumerPeer.removeConsumer(consumer.id);
+
+			this._notification(consumerPeer.socket, 'consumerClosed', { consumerId: consumer.id });
+		});
+
+		consumer.on('producerpause', () =>
+		{
+			this._notification(consumerPeer.socket, 'consumerPaused', { consumerId: consumer.id });
+		});
+
+		consumer.on('producerresume', () =>
+		{
+			this._notification(consumerPeer.socket, 'consumerResumed', { consumerId: consumer.id });
+		});
+
+		consumer.on('score', (score) =>
+		{
+			// bxg: Reduce log
+			// this._notification(consumerPeer.socket, 'consumerScore', { consumerId: consumer.id, score });
+		});
+
+		consumer.on('layerschange', (layers) =>
+		{
+			this._notification(
+				consumerPeer.socket,
+				'consumerLayersChanged',
+				{
+					consumerId    : consumer.id,
+					spatialLayer  : layers ? layers.spatialLayer : null,
+					temporalLayer : layers ? layers.temporalLayer : null
+				}
+			);
+		});
+
+		// Send a request to the remote Peer with Consumer parameters.
+		try
+		{
+			await this._request(
+				consumerPeer.socket,
+				'newConsumer',
+				{
+					peerId         : mcuId,
+					kind           : consumer.kind,
+					producerId     : producer.id,
+					id             : consumer.id,
+					rtpParameters  : consumer.rtpParameters,
+					type           : consumer.type,
+					appData        : producer.appData,
+					producerPaused : consumer.producerPaused,
+					paused         : producer.kind === 'video' && producer.appData.source === 'webcam'
+				}
+			);
+
+			// Now that we got the positive response from the remote Peer and, if
+			// video, resume the Consumer to ask for an efficient key frame.
+			if (!(producer.kind === 'video' && producer.appData.source === 'webcam'))
+				await consumer.resume();
+
+			this._notification(
+				consumerPeer.socket,
+				'consumerScore',
+				{
+					consumerId : consumer.id,
+					score      : consumer.score
+				}
+			);
 
 			this._onNewConsumer(consumerPeer, producerPeer, producer, consumer);
 		}
@@ -2230,7 +2349,8 @@ class Room extends EventEmitter
 
 	/*
 	 * Creates a mediasoup Consumer for the given mediasoup Producer.
-	 *
+	 * 将每个webapp的音视频流发给MCU
+	 * 收到webapp创建produce时候,为MCU创建consumer
 	 * @async
 	 */
 	async _createConsumerForMCU(peer, producer)
