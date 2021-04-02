@@ -753,7 +753,8 @@ class Room extends EventEmitter
 		peer.socket.on('request', (request, cb) =>
 		{
 			// bxg: reduce log
-			if (!(request.method === "getTransportStats")) {
+			if (!(request.method === 'getTransportStats'))
+			{
 				logger.debug(
 					'Peer "request" event [method:"%s", peerId:"%s"]',
 					request.method, peer.id);
@@ -1227,6 +1228,7 @@ class Room extends EventEmitter
 				cb();
 
 				const lastLayer = consumer.appData.preferLayer;
+
 				consumer.appData.preferLayer = spatialLayer;
 				this._onConsumerPreferLayerChange(peer, consumer,lastLayer)
 
