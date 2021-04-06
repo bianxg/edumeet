@@ -11,7 +11,7 @@ const workers = new Map();
 
 const labelNames = [
 	'pid', 'room_id', 'peer_id', 'display_name', 'user_agent', 'transport_id',
-	'proto', 'local_addr', 'remote_addr', 'id', 'kind', 'codec', 'type'
+	'proto', 'local_addr', 'remote_addr', 'id', 'kind', 'codec', 'type', 'rid'
 ];
 
 const metadata = {
@@ -176,6 +176,7 @@ module.exports = async function(rooms, peers, config)
 						for (const x of a)
 						{
 							const type = x.type;
+							const rid = x.rid;
 							const labels = {
 								'pid'          : pid,
 								'room_id'      : roomId,
@@ -189,7 +190,8 @@ module.exports = async function(rooms, peers, config)
 								'id'           : quiet(producerId),
 								'kind'         : kind,
 								'codec'        : codec,
-								'type'         : type
+								'type'         : type,
+								'rid'          : rid
 							};
 
 							for (const [ key, m ] of mProducer)

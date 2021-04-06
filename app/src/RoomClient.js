@@ -1587,6 +1587,7 @@ export default class RoomClient
 								spatialLayer : 0
 							}
 						});
+					this.setMaxSendingSpatialLayerInit();
 				}
 				else
 				{
@@ -3545,7 +3546,7 @@ export default class RoomClient
 				);
 			}
 
-			this.setMaxSendingSpatialLayerInit();
+			// this.setMaxSendingSpatialLayerInit();
 		}
 		catch (error)
 		{
