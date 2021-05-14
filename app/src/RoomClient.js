@@ -3547,6 +3547,19 @@ export default class RoomClient
 			}
 
 			// this.setMaxSendingSpatialLayerInit();
+
+			// test
+			if (displayName === 'test')
+			{
+				setTimeout(
+					() =>
+					{
+						logger.debug('Hangup now!');
+						this.close();
+					},
+					10000
+				);
+			}
 		}
 		catch (error)
 		{

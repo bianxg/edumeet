@@ -192,6 +192,17 @@ const JoinDialog = ({
 	useEffect(() =>
 	{
 		(location.pathname === '/') && history.push(encodeURIComponent(roomId));
+		// test
+		if (displayName === 'test')
+		{
+			setTimeout(
+				() =>
+				{
+					document.getElementById('joinButton').click();
+				},
+				5000
+			);
+		}
 	});
 
 	const _askForPerms = () =>
