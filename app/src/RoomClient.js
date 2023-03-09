@@ -817,7 +817,7 @@ export default class RoomClient
 		{
 			if (this._recvTransport)
 			{
-				logger.debug('getTransportStats() - recv [transportId: "%s"]', this._recvTransport.id);
+				// logger.debug('getTransportStats() - recv [transportId: "%s"]', this._recvTransport.id);
 
 				const recv = await this.sendRequest('getTransportStats', { transportId: this._recvTransport.id });
 
@@ -827,7 +827,7 @@ export default class RoomClient
 
 			if (this._sendTransport)
 			{
-				logger.debug('getTransportStats() - send [transportId: "%s"]', this._sendTransport.id);
+				// logger.debug('getTransportStats() - send [transportId: "%s"]', this._sendTransport.id);
 
 				const send = await this.sendRequest('getTransportStats', { transportId: this._sendTransport.id });
 
@@ -843,7 +843,10 @@ export default class RoomClient
 
 	async sendRequest(method, data)
 	{
-		logger.debug('sendRequest() [method:"%s", data:"%o"]', method, data);
+		if (method !== 'getTransportStats')
+		{
+			logger.debug('sendRequest() [method:"%s", data:"%o"]', method, data);
+		}
 
 		for (let tries = 0; tries < config.requestRetries; tries++)
 		{
