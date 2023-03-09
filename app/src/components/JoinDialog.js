@@ -259,7 +259,7 @@ const JoinDialog = ({
 	// bianxg test
 	useEffect(() =>
 	{
-		if (displayName.startsWith('Mock'))
+		if (displayName.startsWith('Mock') || displayName.startsWith('mock'))
 		{
 			const _autoJoining = async () =>
 			{

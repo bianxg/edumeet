@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>模拟webapp终端测试</title>
+
+    <script type='text/javascript'>
+
+        function getEle(id) {
+            return document.getElementById(id);
+        }
+
+        function joinMeeting() {
+
+            let childOpenWins = [];
+
+            getEle('tip').innerHTML = '';
+
+            const defaultPrefix = getEle('displayName').value;
+
+            //const code = getEle('code').value;
+            const roomId = getEle('roomId').value;
+            const period = getEle('period').value;
+            const callCount = getEle('callCount').value;
+            const expireDelay = getEle('expireDelay').value;
+
+            //if (code && period && callCount) {
+            if (roomId && period && callCount) {
+                // 执行
+
+                // localStorage['mockInviteCode'] = code;
+
+                let joinType = 0;
+                const joinTypeEles = document.getElementsByName('joinType');
+
+                for (let j = 0; j < joinTypeEles.length; j++) {
+
+                    if (joinTypeEles[j].checked) {
+                        joinType = joinTypeEles[j].value;
+                    }
+                }
+
+                let i = 0;
+                let _interval = setInterval(() => {
+
+                    if (++i >= callCount) {
+                        clearInterval(_interval);
+                    }
+
+
+                    let _prefix = defaultPrefix ? defaultPrefix : `Guest`;
+
+                    //const displayName = `${_prefix}_${Math.floor(Math.random() * (100000 - 10000)) + 10000}_${i}`;
+                    const displayName = `${_prefix}_${i}`;
+
+                    //let openWin = window.open(`/?code=${code}&displayName=${displayName}`, `_blank`);
+                    let openWin = window.open(`/${roomId}?displayName=${displayName}`, `_blank`);
+
+                    if (joinType == 1) {
+
+                        //childOpenWins.push(openWin);
+
+                        setTimeout(() => {
+                            openWin && openWin.close();
+                        }, expireDelay * 1000)
+                    }
+
+                    const _openWinItem = document.createElement('div');
+
+                    _openWinItem.innerHTML = `Open window ${i}`;
+
+                    getEle('tip').appendChild(_openWinItem);
+
+                }, period * 1000);
+
+
+                if (joinType == 1) {
+                    setTimeout(() => {
+
+                        for (let i = 0; i < childOpenWins.length; i++) {
+
+                            childOpenWins[i].close();
+                        }
+                        childOpenWins = [];
+                    }, expireDelay * 1000)
+                }
+
+            } else {
+
+                getEle('tip').innerHTML = '请输入必填项';
+            }
+        }
+
+        window.onload = function () {
+
+            /*const inviteCode = localStorage['mockInviteCode'];
+            if (inviteCode) {
+
+                getEle('code').value = code;
+            }*/
+        };
+
+    </script>
+</head>
+
+<body>
+
+    <label for="displayName">昵称:</label><input name="displayName" id="displayName" placeholder="昵称" value="mock"/> <br />
+    <!--<label for="code">邀请码:</label><input name="code" id="code" placeholder="邀请码" /> <br />-->
+    <label for="roomId">会议号:</label><input name="roomId" id="roomId" placeholder="会议号" /> <br />
+    <label for="period">呼叫间隔:</label><input name="period" id="period" type="number" placeholder="呼叫间隔" value="3"/> <span>（秒）可以是小数</span> <br />
+    <label for="callCount">呼叫总数:</label><input name="callCount" id="callCount" type="number" placeholder="呼叫总数" value="1200"/> <br />
+
+    <br />
+
+    <label for="joinType">入会类型:</label><input type="radio" name="joinType" value="0" checked="checked" /> 批量入会
+    <input type="radio" name="joinType" value="1" /> 批量呼入呼出
+    <br />
+    <label for="SSN">退出延时:</label><input name="expireDelay" id="expireDelay" type="number" placeholder="退出延时" /> <span>（秒）（选中批量呼入呼出时，退出延时时间）</span> <br /><br />
+
+    <button onclick="joinMeeting()">加入会议</button>
+    <br />
+    <br />
+    <div id='tip'></div>
+</body>
+</html>
