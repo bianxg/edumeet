@@ -256,6 +256,20 @@ const JoinDialog = ({
 		});
 	};
 
+	// bianxg test
+	useEffect(() =>
+	{
+		if (displayName.startsWith('Mock'))
+		{
+			const _autoJoining = async () =>
+			{
+				handleJoin();
+			};
+
+			_autoJoining();
+		}
+	});
+
 	const handleFocus = (event) => event.target.select();
 
 	/*
