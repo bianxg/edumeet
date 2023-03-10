@@ -11,7 +11,7 @@ const {
 	logoutHelper
 } = require('./lib/helpers/httpHelper');
 const { config, configError } = require('./lib/config/config');
-const interactiveServer = require('./lib/interactive/Server');
+//const interactiveServer = require('./lib/interactive/Server');
 const promExporter = require('./lib/stats/promExporter');
 
 const bcrypt = require('bcrypt');
@@ -29,7 +29,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
-const mediasoup = require('mediasoup');
+//const mediasoup = require('mediasoup');
+const mediasoup = require('../../../mediasoup_bianxg/node/lib/index.js');
+
 const AwaitQueue = require('awaitqueue');
 const base64 = require('base-64');
 const helmet = require('helmet');
@@ -150,7 +152,7 @@ async function run()
 	try
 	{
 		// Open the interactive server.
-		await interactiveServer(rooms, peers);
+		// await interactiveServer(rooms, peers);
 
 		if (typeof (config.auth) === 'undefined')
 		{

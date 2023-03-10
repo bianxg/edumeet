@@ -790,9 +790,11 @@ class Room extends EventEmitter
 
 		peer.socket.on('request', (request, cb) =>
 		{
-			logger.debug(
-				'Peer "request" event [method:"%s", peerId:"%s"]',
-				request.method, peer.id);
+			if (request.method != 'getTransportStats') 
+			{
+				logger.debug('Peer "request" event [method:"%s", peerId:"%s"]',
+					request.method, peer.id);
+			}
 
 			this._handleSocketRequest(peer, request, cb)
 				.catch((error) =>
@@ -1099,7 +1101,16 @@ class Room extends EventEmitter
 
 				// Add peerId into appData to later get the associated Peer during
 				// the 'loudest' event of the audioLevelObserver.
-				appData = { ...appData, peerId: peer.id };
+				
+				appData = { ...appData, peerId: peer.id};
+
+				// bianxg: 
+				if (kind === 'video') 
+				{
+					const consumersPauseState  = new Map();
+					const consumersPreferredLayer = new Map();
+					appData = { ...appData, consumersPauseState: consumersPauseState, consumersPreferredLayer: consumersPreferredLayer};
+				}
 
 				let producer = null;
 
@@ -1927,6 +1938,12 @@ class Room extends EventEmitter
 
 			if (producer.kind === 'audio')
 				await consumer.setPriority(255);
+			// bianxg
+			if (producer.kind === 'video')
+			{
+				producer.appData.consumerPauseState.set(consumer.id, false);
+				producer.appData.consumerPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer); 
+			}
 		}
 		catch (error)
 		{
