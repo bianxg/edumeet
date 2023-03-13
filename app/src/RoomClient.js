@@ -1765,9 +1765,11 @@ export default class RoomClient
 								source : 'webcam',
 								width,
 								height,
-								resolutionScalings
+								resolutionScalings,
+								pasued : false
 							}
 						});
+					this._webcamProducer.pause();
 				}
 				else
 				{
@@ -1778,9 +1780,11 @@ export default class RoomClient
 						{
 							source : 'webcam',
 							width,
-							height
+							height,
+							pasued : false
 						}
 					});
+					this._webcamProducer.pause();
 				}
 
 				store.dispatch(producerActions.addProducer(
@@ -2387,6 +2391,25 @@ export default class RoomClient
 		}
 	}
 
+	async pauseSending(paused)
+	{
+		logger.debug('pauseSending() [pasued:"%s"]', pasued.toString());
+
+		try
+		{
+			if (this._webcamProducer) {
+				if(paused)
+					await this._webcamProducer.pause();
+				else
+					await this._webcamProducer.resume();
+			}
+		}
+		catch (error)
+		{
+			logger.error('pauseSending() [error:"%o"]', error);
+		}
+	}
+
 	async setConsumerPreferredLayers(consumerId, spatialLayer, temporalLayer)
 	{
 		logger.debug(
@@ -2805,6 +2828,23 @@ export default class RoomClient
 			{
 				switch (notification.method)
 				{
+					case 'producerPauseReq':
+					{
+						pauseSending(true);	
+						break;
+					}
+					case 'producerResumeReq':
+					{
+						pauseSending(false);	
+						break;
+					}
+	
+					case 'maxSendingSpatialLayer':
+					{
+						const { spatialLayer} = notification.data;
+						setMaxSendingSpatialLayer(spatialLayer);
+						break;
+					}
 
 					case 'enteredLobby':
 					{
@@ -4344,7 +4384,7 @@ export default class RoomClient
 					*/
 					encodings[0].networkPriority=networkPriority;
 
-					producer = await this._sendTransport.produce(
+					producer = await this.(
 						{
 							track,
 							encodings,
