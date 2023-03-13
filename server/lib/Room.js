@@ -567,6 +567,17 @@ class Room extends EventEmitter
 		});
 	}
 
+	// bianxg: 确认producer是否发送流以及发送大小流
+	_handleProducerPreferredLayer(peer, producer)
+	{
+		logger.debug('_handleProducerPreferredLayer[roomId:"%s", peerId:"%s", producerI:"%s"]', this._roomId, peer.id, producer.id);
+		for (const [ consumerId, paused ] of  producer.appData.consumersPauseState)
+			logger.debug('consumerId: %s paused: %s', consumerId, paused.toString());
+		for (const [ consumerId, preferredLayer ] of  producer.appData.consumersPreferredLayer)
+			logger.debug('consumerId: %s layer: %d', consumerId, preferredLayer);
+
+	}
+
 	logStatus()
 	{
 		logger.info(
@@ -1261,6 +1272,14 @@ class Room extends EventEmitter
 
 				await consumer.pause();
 
+				// bianxg
+				if(consumer.kind === 'video') {
+					const producerPeer = this._peers[consumer.appData.producerPeerId];
+					const producer = producerPeer.getProducer(consumer.producerId);
+					producer.appData.consumersPauseState.set(consumer.id, false);
+					this._handleProducerPreferredLayer(producerPeer, producer);
+				}
+
 				cb();
 
 				break;
@@ -1280,6 +1299,14 @@ class Room extends EventEmitter
 
 				await consumer.resume();
 
+				// bianxg
+				if(consumer.kind === 'video') {
+					const producerPeer = this._peers[consumer.appData.producerPeerId];
+					const producer = producerPeer.getProducer(consumer.producerId);
+					producer.appData.consumersPreferredLayer.set(consumer.id, true);
+					this._handleProducerPreferredLayer(producerPeer, producer);
+				}
+
 				cb();
 
 				break;
@@ -1298,6 +1325,14 @@ class Room extends EventEmitter
 					throw new NotFoundInMediasoupError(`consumer with id "${consumerId}" not found`);
 
 				await consumer.setPreferredLayers({ spatialLayer, temporalLayer });
+
+				// bianxg
+				if(consumer.kind === 'video') {
+					const producerPeer = this._peers[consumer.appData.producerPeerId];
+					const producer = producerPeer.getProducer(consumer.producerId);
+					producer.appData.consumersPreferredLayer.set(consumer.id, spatialLayer);
+					this._handleProducerPreferredLayer(producerPeer, producer);
+				}
 
 				cb();
 
@@ -1933,7 +1968,8 @@ class Room extends EventEmitter
 				{
 					producerId      : producer.id,
 					rtpCapabilities : consumerPeer.rtpCapabilities,
-					paused          : producer.kind === 'video'
+					paused          : producer.kind === 'video',
+					appData 		: { producerPeerId: producerPeer.id }  // bianxg
 				});
 
 			if (producer.kind === 'audio')
@@ -1941,8 +1977,8 @@ class Room extends EventEmitter
 			// bianxg
 			if (producer.kind === 'video')
 			{
-				producer.appData.consumerPauseState.set(consumer.id, false);
-				producer.appData.consumerPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer); 
+				producer.appData.consumersPauseState.set(consumer.id, false);
+				producer.appData.consumersPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer); 
 			}
 		}
 		catch (error)
