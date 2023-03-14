@@ -2007,7 +2007,7 @@ class Room extends EventEmitter
 			// bianxg
 			if (producer.kind === 'video')
 			{
-				producer.appData.consumersPauseState.set(consumer.id, false);
+				producer.appData.consumersPauseState.set(consumer.id, true);
 				producer.appData.consumersPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer);
 				this._calcProducerPreferredLayer(producerPeer, producer, 'new consumer');
 			}

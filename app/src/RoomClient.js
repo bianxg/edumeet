@@ -2331,6 +2331,8 @@ export default class RoomClient
 
 	async _startConsumer(consumer)
 	{
+		logger.debug('_startConsumer() [consumer:"%o"]', consumer);
+
 		return this._resumeConsumer(consumer, { initial: true });
 	}
 
@@ -3438,7 +3440,13 @@ export default class RoomClient
 
 						store.dispatch(consumerActions.addConsumer(consumerStoreObject, peerId));
 
-						await this._startConsumer(consumer);
+						if (kind === 'video')
+						{
+							if (this._spotlights.peerInSpotlights(peerId))
+								await this._startConsumer(consumer);
+						}
+						else
+							await this._startConsumer(consumer);
 
 						if (kind === 'audio')
 						{
