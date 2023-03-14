@@ -1756,7 +1756,10 @@ export default class RoomClient
 						{
 							track,
 							encodings,
-							codecOptions :
+							stopTracks          : false,
+							disableTrackOnPause : false,
+							zeroRtpOnPause      : true,
+							codecOptions        :
 							{
 								videoGoogleStartBitrate : 1000
 							},
@@ -1775,8 +1778,11 @@ export default class RoomClient
 				{
 					this._webcamProducer = await this._sendTransport.produce({
 						track,
-						encodings : [ { networkPriority } ],
-						appData   :
+						encodings           : [ { networkPriority } ],
+						stopTracks          : false,
+						disableTrackOnPause : false,
+						zeroRtpOnPause      : true,
+						appData             :
 						{
 							source : 'webcam',
 							width,
@@ -2391,14 +2397,15 @@ export default class RoomClient
 		}
 	}
 
-	async pauseSending(paused)
+	async pauseVideoSend(paused)
 	{
-		logger.debug('pauseSending() [pasued:"%s"]', pasued.toString());
+		logger.debug('pauseVideoSend() [pasued:"%s"]', paused.toString());
 
 		try
 		{
-			if (this._webcamProducer) {
-				if(paused)
+			if (this._webcamProducer)
+			{
+				if (paused)
 					await this._webcamProducer.pause();
 				else
 					await this._webcamProducer.resume();
@@ -2406,7 +2413,7 @@ export default class RoomClient
 		}
 		catch (error)
 		{
-			logger.error('pauseSending() [error:"%o"]', error);
+			logger.error('pauseVideoSend() [error:"%o"]', error);
 		}
 	}
 
@@ -2830,19 +2837,20 @@ export default class RoomClient
 				{
 					case 'producerPauseReq':
 					{
-						pauseSending(true);	
+						this.pauseVideoSend(true);
 						break;
 					}
 					case 'producerResumeReq':
 					{
-						pauseSending(false);	
+						this.pauseVideoSend(false);
 						break;
 					}
-	
+
 					case 'maxSendingSpatialLayer':
 					{
-						const { spatialLayer} = notification.data;
-						setMaxSendingSpatialLayer(spatialLayer);
+						const { spatialLayer } = notification.data;
+
+						this.setMaxSendingSpatialLayer(spatialLayer);
 						break;
 					}
 
@@ -4384,7 +4392,7 @@ export default class RoomClient
 					*/
 					encodings[0].networkPriority=networkPriority;
 
-					producer = await this.(
+					producer = await this._sendTransport.produce(
 						{
 							track,
 							encodings,

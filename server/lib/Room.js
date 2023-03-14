@@ -567,27 +567,39 @@ class Room extends EventEmitter
 		});
 	}
 
-	// bianxg: 确认producer是否发送流以及发送大小流
-	_calcProducerPreferredLayer(peer, producer)
+	// bianxg: 根据consumer pause状态和选流大学，计算producer是否发送流以及发送大小流
+	_calcProducerPreferredLayer(peer, producer, reason)
 	{
 		let producerPaused = true;
 		let producerPreferredLayer = 0;
-		logger.debug('_calcProducerPreferredLayer[roomId:"%s", peerId:"%s", producerI:"%s"]', this._roomId, peer.id, producer.id);
-		for (const consumerId of producer.appData.consumersPauseState.keys()) {
-			pasued = producer.appData.consumersPauseState[consumerId];
-			preferredLayer = producer.appData.consumersPreferredLayer[consumerId];
-		
-			if(!paused) {
+		logger.debug('_calcProducerPreferredLayer as %s[roomId:"%s", peerId:"%s", producerId:"%s" paused: "%s", layer: %d]', 
+			reason, this._roomId, peer.id, producer.id, producer.appData.paused, producer.appData.preferredLayer);
+		// 遍历前consumer状态和期望的大小流
+		for (const consumerId of producer.appData.consumersPauseState.keys()) {	
+			const paused = producer.appData.consumersPauseState.get(consumerId);
+			const preferredLayer = producer.appData.consumersPreferredLayer.get(consumerId);
+			logger.debug('consumer" %s paused:%s preferredLayer: %d', consumerId, paused, preferredLayer);
+			if (!paused) 
 				producerPaused = false;
-				if(producerPaused > producerPreferredLayer)
-					producerPreferredLayer = producerPaused;
-			}
+			if (preferredLayer > producerPreferredLayer)
+				producerPreferredLayer = preferredLayer;
 		}
-		this._notification(peer.socket, 'maxSendingSpatialLayer', {
-			peerId : peer.id,
-			spatialLayer : producerPreferredLayer});
-		
-
+		if(producerPaused !==  producer.appData.paused) {
+			logger.debug('producer pause: %s', producerPaused);
+			if(producerPaused)
+				this._notification(peer.socket, 'producerPauseReq');
+			else{
+				this._notification(peer.socket, 'producerResumeReq');
+			}			
+			producer.appData.paused = producerPaused;
+		}
+		if(producerPreferredLayer !== producer.appData.preferredLayer) {
+			logger.debug('producer preferLayer: %d', producerPreferredLayer);
+			this._notification(peer.socket, 'maxSendingSpatialLayer', {
+				peerId : peer.id,
+				spatialLayer : producerPreferredLayer});
+			producer.appData.preferredLayer = producerPreferredLayer;
+		}
 	}
 
 	logStatus()
@@ -1132,7 +1144,12 @@ class Room extends EventEmitter
 				{
 					const consumersPauseState  = new Map();
 					const consumersPreferredLayer = new Map();
-					appData = { ...appData, consumersPauseState: consumersPauseState, consumersPreferredLayer: consumersPreferredLayer};
+					appData = { ...appData, 
+						consumersPauseState: consumersPauseState,
+						consumersPreferredLayer: consumersPreferredLayer,
+						paused: true,
+						preferredLayer: 2
+					};
 				}
 
 				let producer = null;
@@ -1289,8 +1306,8 @@ class Room extends EventEmitter
 				if(consumer.kind === 'video') {
 					const producerPeer = this._peers[consumer.appData.producerPeerId];
 					const producer = producerPeer.getProducer(consumer.producerId);
-					producer.appData.consumersPauseState.set(consumer.id, false);
-					this._calcProducerPreferredLayer(producerPeer, producer);
+					producer.appData.consumersPauseState.set(consumer.id, true);
+					this._calcProducerPreferredLayer(producerPeer, producer, 'consumer paused');
 				}
 
 				cb();
@@ -1316,8 +1333,8 @@ class Room extends EventEmitter
 				if(consumer.kind === 'video') {
 					const producerPeer = this._peers[consumer.appData.producerPeerId];
 					const producer = producerPeer.getProducer(consumer.producerId);
-					producer.appData.consumersPreferredLayer.set(consumer.id, true);
-					this._calcProducerPreferredLayer(producerPeer, producer);
+					producer.appData.consumersPauseState.set(consumer.id, false);
+					this._calcProducerPreferredLayer(producerPeer, producer, 'consumer resumed');
 				}
 
 				cb();
@@ -1344,7 +1361,7 @@ class Room extends EventEmitter
 					const producerPeer = this._peers[consumer.appData.producerPeerId];
 					const producer = producerPeer.getProducer(consumer.producerId);
 					producer.appData.consumersPreferredLayer.set(consumer.id, spatialLayer);
-					this._calcProducerPreferredLayer(producerPeer, producer);
+					this._calcProducerPreferredLayer(producerPeer, producer, `consumer prefer layer changed ${spatialLayer}`);
 				}
 
 				cb();
@@ -1991,7 +2008,8 @@ class Room extends EventEmitter
 			if (producer.kind === 'video')
 			{
 				producer.appData.consumersPauseState.set(consumer.id, false);
-				producer.appData.consumersPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer); 
+				producer.appData.consumersPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer);
+				this._calcProducerPreferredLayer(producerPeer, producer, 'new consumer');
 			}
 		}
 		catch (error)
@@ -2017,7 +2035,7 @@ class Room extends EventEmitter
 				const producer = producerPeer.getProducer(consumer.producerId);
 				producer.appData.consumersPauseState.delete(consumer.id);
 				producer.appData.consumersPreferredLayer.delete(consumer.id); 
-				this._calcProducerPreferredLayer(producerPeer, producer);
+				this._calcProducerPreferredLayer(producerPeer, producer, 'consumer removed');
 			}
 
 			this._notification(consumerPeer.socket, 'consumerClosed', { consumerId: consumer.id });
