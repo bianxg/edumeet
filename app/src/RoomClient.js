@@ -275,6 +275,9 @@ export default class RoomClient
 		// Access code
 		this._accessCode = accessCode;
 
+		// Periodic timer for polling video.
+		this._videoPollTimer = null;
+
 		// Alert sounds
 		this._soundAlerts = { 'default': { audio: new Audio('/sounds/notify.mp3') } };
 		if (config.notificationSounds)
@@ -357,6 +360,8 @@ export default class RoomClient
 
 		this._screenSharingAudioProducer = null;
 
+		this._peerIds = [];
+
 		this._startKeyListener();
 
 		this._startDevicesListener();
@@ -412,6 +417,44 @@ export default class RoomClient
 		store.dispatch(roomActions.setRoomState('closed'));
 
 		window.location = `/${this._roomId}`;
+	}
+
+	_startVideoPoll()
+	{
+		if(this._videoPollTimer !== null)
+			return;
+		logger.debug('_startVideoPoll()');
+		this._videoPollTimer = setInterval(() =>
+		{
+			
+			// logger.debug('peers: %s', JSON.stringify(store.getState().peers));
+			const peerIds = Object.keys(store.getState().peers);
+			// logger.debug('peers: %s', JSON.stringify(peerIds));
+			// logger.debug('_peerIds: %s', JSON.stringify(this._peerIds));
+			const peerIds_sorted_str = peerIds.slice().sort().toString();
+			const _peerIds_sorted_str = this._peerIds.slice().sort().toString();
+			logger.debug('peers: %s', peerIds_sorted_str);
+			logger.debug('_peerIds: %s', _peerIds_sorted_str);
+			if (peerIds_sorted_str !== _peerIds_sorted_str) {
+				this._peerIds = peerIds;
+				logger.debug('not =');
+			}
+			const peerId = this._peerIds.shift();
+			this._peerIds.push(peerId);
+			const _peerIds_sorted_str2 = this._peerIds.sort().toString();
+			logger.debug('_peerIds: %s', _peerIds_sorted_str2);
+			this.addSelectedPeer(peerId)
+		}, 1000);
+
+	}
+
+	_stopVideoPoll()
+	{
+		if(this._videoPollTimer === null)
+			return;
+		logger.debug('_stopVideoPoll()');
+		clearInterval(this._videoPollTimer);
+		this._videoPollTimer = null;
 	}
 
 	_startKeyListener()
@@ -563,6 +606,19 @@ export default class RoomClient
 					{
 						store.dispatch(roomActions.setHelpOpen(true));
 
+						break;
+					}
+
+					case 'P':  // Poll 
+					{
+						this._stopVideoPoll();
+						this._startVideoPoll();
+						break;
+					}
+
+					case 'O':  // Stop poll 
+					{
+						this._stopVideoPoll();
 						break;
 					}
 
