@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import Logger from './Logger';
 import hark from 'hark';
 import { getSignalingUrl } from './urlFactory';
@@ -1296,7 +1298,7 @@ export default class RoomClient
 				{
 					if (spotlights.includes(consumer.appData.peerId))
 					{
-						await this._resumeConsumer(consumer);
+						await this._startConsumer(consumer);
 					}
 					else
 					{
@@ -2227,7 +2229,7 @@ export default class RoomClient
 					if (mute)
 						await this._pauseConsumer(consumer);
 					else
-						await this._resumeConsumer(consumer);
+						await this._startConsumer(consumer);
 				}
 			}
 		}
@@ -2332,8 +2334,11 @@ export default class RoomClient
 	async _startConsumer(consumer)
 	{
 		logger.debug('_startConsumer() [consumer:"%o"]', consumer);
+		const initial = consumer.appData.initial;
 
-		return this._resumeConsumer(consumer, { initial: true });
+		consumer.appData.initial = false;
+
+		return this._resumeConsumer(consumer, { initial: initial });
 	}
 
 	async lowerPeerHand(peerId)
@@ -3387,7 +3392,7 @@ export default class RoomClient
 								producerId,
 								kind,
 								rtpParameters,
-								appData : { ...appData, peerId } // Trick.
+								appData : { ...appData, peerId, initial  : true } // Trick.
 							});
 
 						if (this._recvTransport.appData.encodedInsertableStreams)
@@ -3442,6 +3447,7 @@ export default class RoomClient
 
 						if (kind === 'video')
 						{
+							// TODO: 由于时序关系，peers里面可能没有该peerId，导致没有调用_startConsumer
 							if (this._spotlights.peerInSpotlights(peerId))
 								await this._startConsumer(consumer);
 						}

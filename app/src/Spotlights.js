@@ -124,6 +124,7 @@ export default class Spotlights
 			this._activeVideoConsumers.findIndex((consumer) =>
 				consumer.consumerId === newConsumer.id) === -1)
 		{
+			logger.debug('addVideoConsumer() [newConsumer:"%s"]', newConsumer.id);
 			this._activeVideoConsumers.push({
 				consumerId     : newConsumer.id,
 				peerId         : newConsumer.peerId,
