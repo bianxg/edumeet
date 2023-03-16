@@ -424,27 +424,36 @@ export default class RoomClient
 		if(this._videoPollTimer !== null)
 			return;
 		logger.debug('_startVideoPoll()');
+		this._peerIds = Object.keys(store.getState().peers);
 		this._videoPollTimer = setInterval(() =>
 		{
-			
-			// logger.debug('peers: %s', JSON.stringify(store.getState().peers));
+			/*
 			const peerIds = Object.keys(store.getState().peers);
-			// logger.debug('peers: %s', JSON.stringify(peerIds));
-			// logger.debug('_peerIds: %s', JSON.stringify(this._peerIds));
 			const peerIds_sorted_str = peerIds.slice().sort().toString();
 			const _peerIds_sorted_str = this._peerIds.slice().sort().toString();
-			logger.debug('peers: %s', peerIds_sorted_str);
-			logger.debug('_peerIds: %s', _peerIds_sorted_str);
+			logger.debug('peers: %s', peerIds.toString());
+			logger.debug('_peerIds: %s', this._peerIds.toString());
 			if (peerIds_sorted_str !== _peerIds_sorted_str) {
 				this._peerIds = peerIds;
-				logger.debug('not =');
+				logger.debug('peers change!');
 			}
-			const peerId = this._peerIds.shift();
-			this._peerIds.push(peerId);
-			const _peerIds_sorted_str2 = this._peerIds.sort().toString();
-			logger.debug('_peerIds: %s', _peerIds_sorted_str2);
-			this.addSelectedPeer(peerId)
-		}, 1000);
+			*/
+			if (this._peerIds.length < this._maxSpotlights)
+				return;
+
+			let selectedPeers = [];
+
+			for (let i = 0; i < this._maxSpotlights; i++) {
+				const peerId = this._peerIds.shift();
+				this._peerIds.push(peerId);
+				selectedPeers.push(peerId);
+			}
+			// const _peerIds_sorted_str2 = this._peerIds.toString();
+			// logger.debug('_peerIds: %s', _peerIds_sorted_str2);
+			//this.addSelectedPeer(peerId)
+			this.addSomeSelectedPeers(selectedPeers);
+
+		}, 5000);
 
 	}
 
@@ -1938,6 +1947,19 @@ export default class RoomClient
 
 		store.dispatch(
 			roomActions.addSelectedPeer(peerId));
+	}
+
+	addSomeSelectedPeers(peerIds)
+	{
+		logger.debug('addSomeSelectedPeers() [peerIds:"%s"]', peerIds.toString());
+
+		this._spotlights.addSomePeersToSelectedSpotlights(peerIds);
+
+		for(let i=0; i< peerIds.length; i++) 
+		{
+			store.dispatch(
+				roomActions.addSelectedPeer(peerIds[i]));
+		}
 	}
 
 	setSelectedPeer(peerId)

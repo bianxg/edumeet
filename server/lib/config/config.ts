@@ -258,7 +258,8 @@ const configSchema = convict({
 		numWorkers : {
 			doc     : 'The number of Mediasoup workers to spawn. Defaults to the available CPUs count.',
 			format  : 'nat',
-			default : Object.keys(cpus()).length
+			default : 1
+			// default : Object.keys(cpus()).length
 		},
 		worker :
 		{

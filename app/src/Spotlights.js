@@ -41,6 +41,15 @@ export default class Spotlights
 		this._spotlightsUpdated();
 	}
 
+	// bianxg: 一次设置多个Selected peers
+	addSomePeersToSelectedSpotlights(peerIds)
+	{
+		logger.debug('addSomePeersToSpotlight() [peerIds:"%s"]', peerIds.toString());
+
+		this._selectedSpotlights = [ ...this._selectedSpotlights, ...peerIds ];
+		this._spotlightsUpdated();
+	}
+
 	removePeerFromSelectedSpotlights(peerId)
 	{
 		logger.debug('removePeerSpotlight() [peerId:"%s"]', peerId);

@@ -5,7 +5,7 @@ const readline = require('readline');
 const net = require('net');
 const fs = require('fs');
 //const mediasoup = require('mediasoup');
-const mediasoup = require('../../../mediasoup_bianxg/node/lib/index.js');
+const mediasoup = require('../../../../../mediasoup_bianxg/node/lib/index.js');
 const colors = require('colors/safe');
 const pidusage = require('pidusage');
 
@@ -72,6 +72,7 @@ class Interactive
 						this.log('available commands:');
 						this.log('- h,  help                    : show this message');
 						this.log('- usage                       : show CPU and memory usage of the Node.js and mediasoup-worker processes');
+						this.log('- resource                    : show mediasoup Workers resource usage');
 						this.log('- logLevel level              : changes logLevel in all mediasoup Workers');
 						this.log('- logTags [tag] [tag]         : changes logTags in all mediasoup Workers (values separated by space)');
 						this.log('- dumpRooms                   : dump all rooms');
@@ -111,6 +112,24 @@ class Interactive
 
 						break;
 					}
+
+					case 'res':
+					case 'resource':
+						for (const worker of workers.values())
+						{
+							try
+							{
+								const resourceUsage = await worker.getResourceUsage();
+
+								this.log(`worker.getResourceUsage():\n${JSON.stringify(resourceUsage, null, '  ')}`);
+							}
+							catch (error)
+							{
+								this.error(`worker.getResourceUsage() failed: ${error}`);
+							}
+						}
+
+						break;
 
 					case 'logLevel':
 					{

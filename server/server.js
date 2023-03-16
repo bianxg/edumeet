@@ -11,7 +11,7 @@ const {
 	logoutHelper
 } = require('./lib/helpers/httpHelper');
 const { config, configError } = require('./lib/config/config');
-//const interactiveServer = require('./lib/interactive/Server');
+const interactiveServer = require('./lib/interactive/Server');
 const promExporter = require('./lib/stats/promExporter');
 
 const bcrypt = require('bcrypt');
@@ -152,7 +152,7 @@ async function run()
 	try
 	{
 		// Open the interactive server.
-		// await interactiveServer(rooms, peers);
+		await interactiveServer(rooms, peers);
 
 		if (typeof (config.auth) === 'undefined')
 		{
