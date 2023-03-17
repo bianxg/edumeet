@@ -464,7 +464,7 @@ Setting 'play' to null disables the sound notification.
 	{
 		doc     : 'The maximum number of participants that will be visible in as speaker.',
 		format  : 'nat',
-		default : 4
+		default : 16
 	},
 	mobileLastN :
 	{
@@ -476,7 +476,7 @@ Setting 'play' to null disables the sound notification.
 	{
 		doc     : 'The highest number of lastN the user can select manually in the user interface.',
 		format  : 'nat',
-		default : 5
+		default : 16
 	},
 	lockLastN :
 	{

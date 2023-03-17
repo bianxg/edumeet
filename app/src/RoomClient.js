@@ -360,7 +360,7 @@ export default class RoomClient
 
 		this._screenSharingAudioProducer = null;
 
-		this._peerIds = [];
+		this._peerIds = []; // 用于轮询测试
 
 		this._startKeyListener();
 
@@ -3411,6 +3411,7 @@ export default class RoomClient
 							{ id, displayName, picture, roles, consumers: [] }));
 
 						this._spotlights.newPeer(id);
+						this._peerIds = Object.keys(store.getState().peers);
 
 						if (!returning)
 						{
@@ -3443,6 +3444,7 @@ export default class RoomClient
 						}
 
 						this._spotlights.closePeer(peerId);
+						this._peerIds = Object.keys(store.getState().peers);
 
 						store.dispatch(
 							peerActions.removePeer(peerId));

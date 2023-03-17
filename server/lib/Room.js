@@ -572,29 +572,29 @@ class Room extends EventEmitter
 	{
 		let producerPaused = true;
 		let producerPreferredLayer = 0;
-		logger.debug('_calcProducerPreferredLayer as %s[roomId:"%s", peerId:"%s", producerId:"%s" paused: "%s", layer: %d]', 
-			reason, this._roomId, peer.id, producer.id, producer.appData.paused, producer.appData.preferredLayer);
+		// logger.debug('_calcProducerPreferredLayer as %s[roomId:"%s", peerId:"%s", producerId:"%s" paused: "%s", layer: %d]', 
+			// reason, this._roomId, peer.id, producer.id, producer.appData.paused, producer.appData.preferredLayer);
 		// 遍历前consumer状态和期望的大小流
 		for (const consumerId of producer.appData.consumersPauseState.keys()) {	
 			const paused = producer.appData.consumersPauseState.get(consumerId);
 			const preferredLayer = producer.appData.consumersPreferredLayer.get(consumerId);
-			logger.debug('consumer" %s paused:%s preferredLayer: %d', consumerId, paused, preferredLayer);
+			// logger.debug('consumer" %s paused:%s preferredLayer: %d', consumerId, paused, preferredLayer);
 			if (!paused) 
 				producerPaused = false;
 			if (preferredLayer > producerPreferredLayer)
 				producerPreferredLayer = preferredLayer;
 		}
 		if(producerPaused !==  producer.appData.paused) {
-			logger.debug('producer pause: %s', producerPaused);
+			// logger.debug('producer pause: %s', producerPaused);
 			if(producerPaused)
 				this._notification(peer.socket, 'producerPauseReq');
 			else{
 				this._notification(peer.socket, 'producerResumeReq');
-			}			
+			}
 			producer.appData.paused = producerPaused;
 		}
 		if(producerPreferredLayer !== producer.appData.preferredLayer) {
-			logger.debug('producer preferLayer: %d', producerPreferredLayer);
+			// logger.debug('producer preferLayer: %d', producerPreferredLayer);
 			this._notification(peer.socket, 'maxSendingSpatialLayer', {
 				peerId : peer.id,
 				spatialLayer : producerPreferredLayer});
