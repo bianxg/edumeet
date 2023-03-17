@@ -453,7 +453,7 @@ export default class RoomClient
 			//this.addSelectedPeer(peerId)
 			this.addSomeSelectedPeers(selectedPeers);
 
-		}, 5000);
+		}, 2000);
 
 	}
 

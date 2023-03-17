@@ -508,6 +508,7 @@ class VideoView extends React.PureComponent
 			videoElement.oncanplay = null;
 			videoElement.onplay = null;
 			videoElement.onpause = null;
+			videoElement.srcObject = null; // bianxg
 		}
 
 		if (this.audioAnalyzer)
@@ -560,7 +561,7 @@ class VideoView extends React.PureComponent
 			videoElement.oncanplay = () => this.setState({ videoCanPlay: true });
 
 			videoElement.play()
-				.catch((error) => logger.warn('videoElement.play() [error:"%o]', error));
+				.catch((error) => logger.warn('videoElement.play() [error:"%o"]', error));
 
 			this._showVideoResolution();
 		}
