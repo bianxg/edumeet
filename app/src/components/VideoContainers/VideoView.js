@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
@@ -516,6 +518,12 @@ class VideoView extends React.PureComponent
 			this.audioAnalyzer.delete();
 			this.audioAnalyzer = null;
 		}
+
+		// bianxg
+
+		this._videoTrack = null;
+		this._audioTrack = null;
+		this._videoResolutionTimer = null;
 	}
 
 	componentDidUpdate(prevProps)
