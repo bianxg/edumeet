@@ -3752,6 +3752,16 @@ export default class RoomClient
 
 						break;
 					}
+					case 'pollStart':
+					{
+						this._stopVideoPoll();
+						this._startVideoPoll();
+						break;
+					}
+					case 'pollStop':
+					{
+						this._stopVideoPoll();
+					}
 					case 'setLocalRecording':
 					{
 						const { peerId, localRecordingState } = notification.data;

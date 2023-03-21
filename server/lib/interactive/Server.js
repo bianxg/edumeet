@@ -90,6 +90,8 @@ class Interactive
 						this.log('- sdp, statsDataProducer [id] : get stats for mediasoup DataProducer with given id (or the latest created one)');
 						this.log('- sdc, statsDataConsumer [id] : get stats for mediasoup DataConsumer with given id (or the latest created one)');
 						this.log('- t,  terminal                : open Node REPL Terminal');
+						this.log('- pollStart                   : nofify all peers poll start');
+						this.log('- pollStop                    : notify all peers poll stop');
 						this.log('');
 						readStdin();
 
@@ -218,6 +220,44 @@ class Interactive
 							catch (error)
 							{
 								this.error(`peer.peerInfo() failed: ${error}`);
+							}
+						}
+
+						break;
+					}
+
+					case 'pollStart':
+					{
+						const method = 'pollStart';
+						const data = {};
+						for (const peer of global.peers.values())
+						{
+							try
+							{
+								await peer.socket.emit('notification', { method,data });
+							}
+							catch (error)
+							{
+								this.error(`peer.socket.emit() failed: ${error}`);
+							}
+						}
+
+						break;
+					}
+
+					case 'pollStop':
+					{
+						const method = 'pollStop';
+						const data = {};
+						for (const peer of global.peers.values())
+						{
+							try
+							{
+								await peer.socket.emit('notification', { method,data });
+							}
+							catch (error)
+							{
+								this.error(`peer.socket.emit() failed: ${error}`);
 							}
 						}
 

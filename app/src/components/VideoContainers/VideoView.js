@@ -202,6 +202,8 @@ class VideoView extends React.PureComponent
 
 		// Audio Analyzer
 		this.audioAnalyzerContainer = React.createRef();
+
+		this.videoElementRef = React.createRef();
 	}
 
 	render()
@@ -452,7 +454,7 @@ class VideoView extends React.PureComponent
 				</div>
 
 				<video
-					ref='videoElement'
+					ref= {this.videoElementRef}
 					className={classnames(classes.video, {
 						hidden : (!videoVisible ||
 							(
@@ -503,14 +505,20 @@ class VideoView extends React.PureComponent
 	{
 		clearInterval(this._videoResolutionTimer);
 
-		const { videoElement } = this.refs;
+		//const { videoElement } = this.refs;
+		const videoElement = this.videoElementRef.current;
 
 		if (videoElement)
 		{
 			videoElement.oncanplay = null;
 			videoElement.onplay = null;
 			videoElement.onpause = null;
+			if (videoElement.srcObject && this._videoTrack)
+			{
+				videoElement.srcObject.removeTrack(this._videoTrack);
+			}
 			videoElement.srcObject = null; // bianxg
+			videoElement.remove();
 		}
 
 		if (this.audioAnalyzer)
@@ -556,10 +564,14 @@ class VideoView extends React.PureComponent
 		clearInterval(this._videoResolutionTimer);
 		this._hideVideoResolution();
 
-		const { videoElement } = this.refs;
+		//const { videoElement } = this.refs;
+		const videoElement = this.videoElementRef.current;
 
 		if (videoTrack)
 		{
+			// bianxg
+			videoElement.srcObject = null;
+
 			const stream = new MediaStream();
 
 			stream.addTrack(videoTrack);
@@ -603,7 +615,8 @@ class VideoView extends React.PureComponent
 		this._videoResolutionTimer = setInterval(() =>
 		{
 			const { videoWidth, videoHeight } = this.state;
-			const { videoElement } = this.refs;
+			// const { videoElement } = this.refs;
+			const videoElement = this.videoElementRef.current;
 
 			// Don't re-render if nothing changed.
 			if (
