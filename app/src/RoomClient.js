@@ -453,7 +453,7 @@ export default class RoomClient
 			//this.addSelectedPeer(peerId)
 			this.addSomeSelectedPeers(selectedPeers);
 
-		}, 2000);
+		}, 5000);
 
 	}
 
@@ -2361,7 +2361,7 @@ export default class RoomClient
 
 	async _pauseConsumer(consumer)
 	{
-		logger.debug('_pauseConsumer() [consumer:"%o"]', consumer);
+		// logger.debug('_pauseConsumer() [consumer:"%o"]', consumer);
 
 		if (consumer.paused || consumer.closed)
 			return;
@@ -2387,7 +2387,7 @@ export default class RoomClient
 
 	async _resumeConsumer(consumer, { initial = false } = {})
 	{
-		logger.debug('_resumeConsumer() [consumer:"%o"]', consumer);
+		// logger.debug('_resumeConsumer() [consumer:"%o"]', consumer);
 
 		if ((!initial && !consumer.paused) || consumer.closed)
 			return;
@@ -2411,7 +2411,7 @@ export default class RoomClient
 
 	async _startConsumer(consumer)
 	{
-		logger.debug('_startConsumer() [consumer:"%o"]', consumer);
+		// logger.debug('_startConsumer() [consumer:"%o"]', consumer);
 		const initial = consumer.appData.initial;
 
 		consumer.appData.initial = false;
@@ -2617,10 +2617,10 @@ export default class RoomClient
 		const adaptiveScalingFactor = Math.min(Math.max(
 			config.adaptiveScalingFactor || 0.75, 0.5), 1.0);
 
-		logger.debug(
+		/* logger.debug(
 			'adaptConsumerPreferredLayers() [consumerId:"%s", width:"%d", height:"%d" resolutionScalings:[%s] viewportWidth:"%d", viewportHeight:"%d"]',
 			consumer.id, width, height, resolutionScalings.join(', '),
-			viewportWidth, viewportHeight);
+			viewportWidth, viewportHeight); */
 
 		let newPreferredSpatialLayer = 0;
 
@@ -2912,9 +2912,12 @@ export default class RoomClient
 
 		this._signalingSocket.on('notification', async (notification) =>
 		{
-			logger.debug(
-				'socket "notification" event [method:"%s", data:"%o"]',
-				notification.method, notification.data);
+			if (notification.method !== 'consumerScore' && notification.method !== 'consumerLayersChanged') 
+			{
+				logger.debug(
+					'socket "notification" event [method:"%s", data:"%o"]',
+					notification.method, notification.data);
+			}
 
 			try
 			{
