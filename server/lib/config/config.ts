@@ -240,7 +240,7 @@ const configSchema = convict({
 	routerScaleSize : {
 		doc     : 'Room size before spreading to a new router.',
 		format  : 'nat',
-		default : 40
+		default : 30
 	},
 	requestTimeout : {
 		doc     : 'Socket timeout value (ms).',
@@ -258,8 +258,7 @@ const configSchema = convict({
 		numWorkers : {
 			doc     : 'The number of Mediasoup workers to spawn. Defaults to the available CPUs count.',
 			format  : 'nat',
-			default : 1
-			// default : Object.keys(cpus()).length
+			default : Object.keys(cpus()).length
 		},
 		worker :
 		{
