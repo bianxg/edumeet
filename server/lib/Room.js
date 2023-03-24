@@ -567,7 +567,7 @@ class Room extends EventEmitter
 		});
 	}
 
-	// bianxg: 根据consumer pause状态和选流大学，计算producer是否发送流以及发送大小流
+	// bianxg: 根据consumer pause状态和选流大小，计算producer是否发送流以及发送大小流
 	_calcProducerPreferredLayer(peer, producer, reason)
 	{
 		let producerPaused = true;
@@ -1144,11 +1144,12 @@ class Room extends EventEmitter
 				{
 					const consumersPauseState  = new Map();
 					const consumersPreferredLayer = new Map();
+					const preferredLayer = appData.resolutionScalings.length -1;
 					appData = { ...appData, 
 						consumersPauseState: consumersPauseState,
 						consumersPreferredLayer: consumersPreferredLayer,
 						paused: true,
-						preferredLayer: 2
+						preferredLayer: preferredLayer
 					};
 				}
 

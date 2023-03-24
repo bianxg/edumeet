@@ -1807,6 +1807,9 @@ export default class RoomClient
 					const encodings = this._getEncodings(width, height);
 					const resolutionScalings = getResolutionScalings(encodings);
 
+					logger.debug('encodings: %o', encodings);
+					logger.debug('resolutionScalings: %o', resolutionScalings);
+
 					/** 
 					 * TODO: 
 					 * I receive DOMException: 
@@ -2617,10 +2620,10 @@ export default class RoomClient
 		const adaptiveScalingFactor = Math.min(Math.max(
 			config.adaptiveScalingFactor || 0.75, 0.5), 1.0);
 
-		/* logger.debug(
+		logger.debug(
 			'adaptConsumerPreferredLayers() [consumerId:"%s", width:"%d", height:"%d" resolutionScalings:[%s] viewportWidth:"%d", viewportHeight:"%d"]',
 			consumer.id, width, height, resolutionScalings.join(', '),
-			viewportWidth, viewportHeight); */
+			viewportWidth, viewportHeight);
 
 		let newPreferredSpatialLayer = 0;
 
