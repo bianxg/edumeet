@@ -1293,7 +1293,7 @@ export default class RoomClient
 				{
 					if (spotlights.includes(consumer.appData.peerId))
 					{
-						await this._resumeConsumer(consumer);
+						await this._startConsumer(consumer);
 					}
 					else
 					{
@@ -1757,27 +1757,37 @@ export default class RoomClient
 							{
 								videoGoogleStartBitrate : 1000
 							},
-							appData :
+							stopTracks          : false,
+							disableTrackOnPause : false,
+							zeroRtpOnPause      : true,
+							appData             :
 							{
 								source : 'webcam',
 								width,
 								height,
-								resolutionScalings
+								resolutionScalings,
+								pasued : false
 							}
 						});
+					this._webcamProducer.pause();
 				}
 				else
 				{
 					this._webcamProducer = await this._sendTransport.produce({
 						track,
-						encodings : [ { networkPriority } ],
-						appData   :
+						encodings           : [ { networkPriority } ],
+						stopTracks          : false,
+						disableTrackOnPause : false,
+						zeroRtpOnPause      : true,
+						appData             :
 						{
 							source : 'webcam',
 							width,
-							height
+							height,
+							pasued : false
 						}
 					});
+					this._webcamProducer.pause();
 				}
 
 				store.dispatch(producerActions.addProducer(
@@ -2214,7 +2224,7 @@ export default class RoomClient
 					if (mute)
 						await this._pauseConsumer(consumer);
 					else
-						await this._resumeConsumer(consumer);
+						await this._startConsumer(consumer);
 				}
 			}
 		}
@@ -2318,7 +2328,11 @@ export default class RoomClient
 
 	async _startConsumer(consumer)
 	{
-		return this._resumeConsumer(consumer, { initial: true });
+		const firstTimeStart = consumer.appData.firstTimeStart;
+
+		consumer.appData.firstTimeStart = false;
+
+		return this._resumeConsumer(consumer, { initial: firstTimeStart });
 	}
 
 	async lowerPeerHand(peerId)
@@ -2381,6 +2395,26 @@ export default class RoomClient
 		catch (error)
 		{
 			logger.error('setMaxSendingSpatialLayer() [error:"%o"]', error);
+		}
+	}
+
+	async pauseVideoSend(paused)
+	{
+		logger.debug('pauseVideoSend() [pasued:"%s"]', paused.toString());
+
+		try
+		{
+			if (this._webcamProducer)
+			{
+				if (paused)
+					await this._webcamProducer.pause();
+				else
+					await this._webcamProducer.resume();
+			}
+		}
+		catch (error)
+		{
+			logger.error('pauseVideoSend() [error:"%o"]', error);
 		}
 	}
 
@@ -2802,6 +2836,25 @@ export default class RoomClient
 			{
 				switch (notification.method)
 				{
+
+					case 'producerPauseReq':
+					{
+						this.pauseVideoSend(true);
+						break;
+					}
+					case 'producerResumeReq':
+					{
+						this.pauseVideoSend(false);
+						break;
+					}
+
+					case 'maxSendingSpatialLayer':
+					{
+						const { spatialLayer } = notification.data;
+
+						this.setMaxSendingSpatialLayer(spatialLayer);
+						break;
+					}
 
 					case 'enteredLobby':
 					{
@@ -3334,7 +3387,12 @@ export default class RoomClient
 								producerId,
 								kind,
 								rtpParameters,
-								appData : { ...appData, peerId } // Trick.
+								appData :
+								{
+									...appData,
+									peerId,
+									firstTimeStart : true
+								} // Trick.
 							});
 
 						if (this._recvTransport.appData.encodedInsertableStreams)
@@ -3387,7 +3445,13 @@ export default class RoomClient
 
 						store.dispatch(consumerActions.addConsumer(consumerStoreObject, peerId));
 
-						await this._startConsumer(consumer);
+						if (kind === 'video')
+						{
+							if (this._spotlights.peerInSpotlights(peerId))
+								await this._startConsumer(consumer);
+						}
+						else
+							await this._startConsumer(consumer);
 
 						if (kind === 'audio')
 						{
