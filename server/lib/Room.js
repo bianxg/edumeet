@@ -824,9 +824,12 @@ class Room extends EventEmitter
 
 		peer.socket.on('request', (request, cb) =>
 		{
-			logger.debug(
-				'Peer "request" event [method:"%s", peerId:"%s"]',
-				request.method, peer.id);
+			if (request.method !== 'getTransportStats')
+			{
+				logger.debug(
+					'Peer "request" event [method:"%s", peerId:"%s"]',
+					request.method, peer.id);
+			}
 
 			this._handleSocketRequest(peer, request, cb)
 				.catch((error) =>
@@ -1134,17 +1137,17 @@ class Room extends EventEmitter
 				// Add peerId into appData to later get the associated Peer during
 				// the 'loudest' event of the audioLevelObserver.
 				appData = { ...appData, peerId: peer.id };
-
+				
 				if (kind === 'video' && rtpParameters.encodings.length > 1)
 				{
 					const consumersPauseState  = new Map();
 					const consumersPreferredLayer = new Map();
 					appData = { ...appData, consumersPauseState: consumersPauseState, consumersPreferredLayer: consumersPreferredLayer};
-					appData = { ...appData, 
+					appData = { ...appData,
 						consumersPauseState: consumersPauseState,
 						consumersPreferredLayer: consumersPreferredLayer,
 						paused: true,
-						preferredLayer: 2
+						preferredLayer: rtpParameters.encodings.length - 1
 					};
 				}
 
@@ -1998,8 +2001,8 @@ class Room extends EventEmitter
 
 			if (producer.kind === 'video' && producer.type !== 'simple')
 			{
-				producer.appData.consumerPauseState.set(consumer.id, paused);
-				producer.appData.consumerPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer); 
+				producer.appData.consumersPauseState.set(consumer.id, true);
+				producer.appData.consumersPreferredLayer.set(consumer.id, consumer.preferredLayers.spatialLayer); 
 				this._calcProducerPreferredLayer(producerPeer, producer, 'new consumer');
 			}
 		}

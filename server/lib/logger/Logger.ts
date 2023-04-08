@@ -30,7 +30,7 @@ constructor(prefix: string)
 	}
 
 	/* eslint-disable no-console */
-	this._debug.log = console.info.bind(console);
+	this._debug.log = console.debug.bind(console);
 	this._info.log = console.info.bind(console);
 	this._warn.log = console.warn.bind(console);
 	this._error.log = console.error.bind(console);
