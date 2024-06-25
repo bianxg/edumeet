@@ -2823,6 +2823,14 @@ export default class RoomClient
 
 			switch (request.method)
 			{
+				case 'maxSendingSpatialLayer':
+				{
+					const { spatialLayer } = request.data;
+
+					await this.setMaxSendingSpatialLayer(spatialLayer);
+					cb();
+					break;
+				}
 				default:
 				{
 					logger.error('unknown request.method "%s"', request.method);
@@ -2857,13 +2865,15 @@ export default class RoomClient
 						break;
 					}
 
+					/*
 					case 'maxSendingSpatialLayer':
 					{
 						const { spatialLayer } = notification.data;
 
-						this.setMaxSendingSpatialLayer(spatialLayer);
+						await this.setMaxSendingSpatialLayer(spatialLayer);
 						break;
 					}
+					*/
 
 					case 'enteredLobby':
 					{
