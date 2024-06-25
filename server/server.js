@@ -29,7 +29,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
-const mediasoup = require('mediasoup');
+// Use mediasoup_3.10.5 source code
+//const mediasoup = require('mediasoup');
+const mediasoup = require('../../../mediasoup/node/lib/index.js');
 const AwaitQueue = require('awaitqueue');
 const base64 = require('base-64');
 const helmet = require('helmet');
