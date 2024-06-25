@@ -57,7 +57,8 @@ const intl = createIntl({ locale: 'en', defaultLocale: 'en' });
 
 recorder.intl = intl;
 
-if (process.env.REACT_APP_DEBUG === '*' || process.env.NODE_ENV !== 'production')
+// enable log
+// if (process.env.REACT_APP_DEBUG === '*' || process.env.NODE_ENV !== 'production')
 {
 	debug.enable('* -engine* -socket* -RIE* *WARN* *ERROR*');
 }

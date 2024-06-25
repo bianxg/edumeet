@@ -567,13 +567,16 @@ class Room extends EventEmitter
 		});
 	}
 
+	// Update the producer's pause state and preferred layer based on the 
+	// state of all of the producer's consumers, and send appropriate notifications 
+	// when the state changes
 	_calcProducerPreferredLayer(peer, producer, reason)
 	{
 		let producerPaused = true;
 		let producerPreferredLayer = 0;
 
 		logger.debug(
-			'_calcProducerPreferredLayer as %s[room:"%s", peer:"%s", producer:"%s" paused:"%s", layer: %d]',
+			'_calcProducerPreferredLayer as "%s"[room:"%s", peer:"%s", producer:"%s" paused:%s, layer:%d]',
 			reason, this._roomId, peer.id,
 			producer.id, producer.appData.paused,
 			producer.appData.preferredLayer);
@@ -583,8 +586,7 @@ class Room extends EventEmitter
 			const paused = producer.appData.consumersPauseState.get(consumerId);
 			const preferredLayer = producer.appData.consumersPreferredLayer.get(consumerId);
 
-			logger.debug('consumer" %s paused:%s preferredLayer: %d',
-				consumerId, paused, preferredLayer);
+			// logger.debug('consumer "%s" paused: %s preferredLayer: %d', consumerId, paused, preferredLayer);
 
 			if (!paused)
 				producerPaused = false;
@@ -594,7 +596,7 @@ class Room extends EventEmitter
 
 		if (producerPaused !== producer.appData.paused)
 		{
-			logger.debug('producer pause: %s', producerPaused);
+			logger.debug('producer pause:%s', producerPaused);
 			if (producerPaused)
 			{
 				this._notification(peer.socket, 'producerPauseReq');
@@ -839,9 +841,12 @@ class Room extends EventEmitter
 
 		peer.socket.on('request', (request, cb) =>
 		{
-			logger.debug(
-				'Peer "request" event [method:"%s", peerId:"%s"]',
-				request.method, peer.id);
+			if (request.method != 'getTransportStats')
+			{
+				logger.debug(
+					'Peer "request" event [method:"%s", peerId:"%s"]',
+					request.method, peer.id);
+			}
 
 			this._handleSocketRequest(peer, request, cb)
 				.catch((error) =>
@@ -2258,6 +2263,14 @@ class Room extends EventEmitter
 
 	_notification(socket, method, data = {}, broadcast = false, includeSender = false)
 	{
+		if (method === 'consumerScore' || method === 'producerScore') 
+		{
+		}
+		else
+		{ 
+			logger.debug('_notification() [method:"%s", data:"%o"]', method, data);
+		}
+
 		if (broadcast)
 		{
 			socket.broadcast.to(this._roomId).emit(
