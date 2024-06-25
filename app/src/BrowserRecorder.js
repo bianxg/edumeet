@@ -44,8 +44,9 @@ export default class BrowserRecorder
 			displaySurface : 'browser',
 			width          : { ideal: 1920 }
 		},
-			audio    : false,
-			advanced : [
+			selfBrowserSurface : 'include',
+			audio              : false,
+			advanced           : [
 				{ width: 1920, height: 1080 },
 				{ width: 1280, height: 720 }
 			]
