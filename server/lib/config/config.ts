@@ -312,7 +312,7 @@ const configSchema = convict({
 						parameters :
 						{
 							'packetization-mode'      : 1,
-							'profile-level-id'        : '4d0032',
+							'profile-level-id'        : '42e01f',
 							'level-asymmetry-allowed' : 1,
 							'x-google-start-bitrate'  : 1000
 						}
@@ -343,7 +343,7 @@ const configSchema = convict({
 						parameters :
 						{
 							'packetization-mode'      : 1,
-							'profile-level-id'        : '42e01f',
+							'profile-level-id'        : '4d0032',
 							'level-asymmetry-allowed' : 1,
 							'x-google-start-bitrate'  : 1000
 						}

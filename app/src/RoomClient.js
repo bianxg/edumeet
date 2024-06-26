@@ -1772,9 +1772,10 @@ export default class RoomClient
 								width,
 								height,
 								resolutionScalings,
-								pasued : false
+								pasued : true
 							}
 						});
+
 					this._webcamProducer.pause();
 				}
 				else
@@ -1790,9 +1791,10 @@ export default class RoomClient
 							source : 'webcam',
 							width,
 							height,
-							pasued : false
+							pasued : true
 						}
 					});
+
 					this._webcamProducer.pause();
 				}
 
@@ -2395,8 +2397,6 @@ export default class RoomClient
 		{
 			if (this._webcamProducer)
 				await this._webcamProducer.setMaxSpatialLayer(spatialLayer);
-			if (this._screenSharingProducer)
-				await this._screenSharingProducer.setMaxSpatialLayer(spatialLayer);
 		}
 		catch (error)
 		{
@@ -2823,14 +2823,6 @@ export default class RoomClient
 
 			switch (request.method)
 			{
-				case 'maxSendingSpatialLayer':
-				{
-					const { spatialLayer } = request.data;
-
-					await this.setMaxSendingSpatialLayer(spatialLayer);
-					cb();
-					break;
-				}
 				default:
 				{
 					logger.error('unknown request.method "%s"', request.method);
@@ -2865,15 +2857,13 @@ export default class RoomClient
 						break;
 					}
 
-					/*
 					case 'maxSendingSpatialLayer':
 					{
 						const { spatialLayer } = notification.data;
 
-						await this.setMaxSendingSpatialLayer(spatialLayer);
+						this.setMaxSendingSpatialLayer(spatialLayer);
 						break;
 					}
-					*/
 
 					case 'enteredLobby':
 					{
