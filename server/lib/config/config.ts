@@ -367,7 +367,7 @@ const configSchema = convict({
 			maxIncomingBitrate : {
 				doc     : 'The Mediasoup maximum incoming bitrate for each transport. (in bps). [setMaxIncomingBitrate](https://mediasoup.org/documentation/v3/mediasoup/api/#transport-setMaxIncomingBitrate)',
 				format  : 'nat',
-				default : 15000000
+				default : 4000000
 			}
 		}
 	},

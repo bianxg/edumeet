@@ -4100,7 +4100,7 @@ export default class RoomClient
 
 			const { selectedAudioOutputDevice } = store.getState().settings;
 
-			if (!selectedAudioOutputDevice && this._audioOutputDevices !== {})
+			if (!selectedAudioOutputDevice && Object.keys(this._audioOutputDevices).length > 0)
 			{
 				store.dispatch(
 					settingsActions.setSelectedAudioOutputDevice(
