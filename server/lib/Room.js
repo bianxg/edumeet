@@ -1158,7 +1158,7 @@ class Room extends EventEmitter
 				// the 'loudest' event of the audioLevelObserver.
 				appData = { ...appData, peerId: peer.id };
 
-				if (kind === 'video' && rtpParameters.encodings.length > 1)
+				if (kind === 'video' && appData.resolutionScalings.length > 0)
 				{
 					const consumersPauseState = new Map();
 					const consumersPreferredLayer = new Map();
@@ -1167,7 +1167,7 @@ class Room extends EventEmitter
 						...appData,
 						consumersPauseState     : consumersPauseState,
 						consumersPreferredLayer : consumersPreferredLayer,
-						preferredLayer          : rtpParameters.encodings.length - 1
+						preferredLayer          : appData.resolutionScalings.length - 1
 					};
 				}
 
@@ -2028,6 +2028,7 @@ class Room extends EventEmitter
 			if (producer.kind === 'audio')
 				await consumer.setPriority(255);
 
+			// 'svc' or 'simulcast'
 			if (producer.kind === 'video' && producer.type !== 'simple')
 			{
 				producer.appData.consumersPauseState.set(consumer.id, consumer.paused);

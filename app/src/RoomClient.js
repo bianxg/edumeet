@@ -117,7 +117,8 @@ const VIDEO_SIMULCAST_PROFILES =
 // Used for VP9 webcam video.
 const VIDEO_KSVC_ENCODINGS =
 [
-	{ scalabilityMode: 'S3T3_KEY' }
+	// { scalabilityMode: 'S3T3_KEY' }
+	{ scalabilityMode: 'S3T3' }
 ];
 
 // Used for VP9 desktop sharing.
