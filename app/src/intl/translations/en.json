@@ -246,6 +246,8 @@
     "tooltip.startLocalRecording": "Start local recording",
     "tooltip.stopLocalRecording": "Stop local recording",
     "tooltip.unLockRoom": "Unlock room",
+    "tooltip.filmstrip": "Filmstrip view",
+    "tooltip.democratic": "Democratic view",
     "tooltip.unMuteParticipant": "Unmute audio",
     "tooltip.unMuteParticipantVideo": "Unmute video",
     "tooltip.unMuteScreenSharing": "Unmute screen share",

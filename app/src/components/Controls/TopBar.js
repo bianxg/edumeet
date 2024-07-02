@@ -49,6 +49,8 @@ import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
 import PauseCircleFilledIcon from '@material-ui/icons/PauseCircleFilled';
 import StopIcon from '@material-ui/icons/Stop';
+import ViewCompactIcon from '@material-ui/icons/ViewCompact';
+import ViewModuleIcon from '@material-ui/icons/ViewModule';
 import randomString from 'random-string';
 import { recorder } from './../../BrowserRecorder';
 
@@ -286,7 +288,9 @@ const TopBar = (props) =>
 		recordingMimeType,
 		producers,
 		consumers,
-		recordingConsents
+		recordingConsents,
+		setDemocraticView,
+		setFilmstripView
 	} = props;
 
 	// did it change?
@@ -360,6 +364,17 @@ const TopBar = (props) =>
 		intl.formatMessage({
 			id             : 'tooltip.lockRoom',
 			defaultMessage : 'Lock room'
+		});
+
+	const viewTooltip = room.mode === 'democratic' ?
+		intl.formatMessage({
+			id             : 'tooltip.filmstrip',
+			defaultMessage : 'Filmstrip view'
+		})
+		:
+		intl.formatMessage({
+			id             : 'tooltip.democratic',
+			defaultMessage : 'Democratic view'
 		});
 
 	const recordingTooltip = (localRecordingState.status === 'start' ||
@@ -481,6 +496,33 @@ const TopBar = (props) =>
 								color='inherit'
 							>
 								<MoreIcon />
+							</IconButton>
+						</Tooltip>
+						<Tooltip title={viewTooltip}>
+							<IconButton
+								aria-label={intl.formatMessage({
+									id             : 'tooltip.filmstrip',
+									defaultMessage : 'Filmstrip view'
+								})}
+								className={classes.actionButton}
+								color='inherit'
+								onClick={() =>
+								{
+									if (room.mode === 'filmstrip')
+									{
+										setDemocraticView();
+									}
+									else
+									{
+										setFilmstripView();
+									}
+								}}
+							>
+								{ room.mode === 'democratic' ?
+									<ViewCompactIcon />
+									:
+									<ViewModuleIcon />
+								}
 							</IconButton>
 						</Tooltip>
 						{ fullscreenEnabled &&
@@ -1114,6 +1156,44 @@ const TopBar = (props) =>
 						/>
 					</p>
 				</MenuItem>
+				<MenuItem
+					aria-label={viewTooltip}
+					onClick={() =>
+					{
+						handleMenuClose();
+
+						if (room.mode === 'filmstrip')
+						{
+							setDemocraticView();
+						}
+						else
+						{
+							setFilmstripView();
+						}
+					}}
+				>
+					{ room.mode === 'democratic' ?
+						<ViewCompactIcon />
+						:
+						<ViewModuleIcon />
+					}
+
+					{ room.mode === 'democratic' ?
+						<p className={classes.moreAction}>
+							<FormattedMessage
+								id='tooltip.filmstrip'
+								defaultMessage='Filmstrip view'
+							/>
+						</p>
+						:
+						<p className={classes.moreAction}>
+							<FormattedMessage
+								id='tooltip.democratic'
+								defaultMessage='Democratic view'
+							/>
+						</p>
+					}
+				</MenuItem>
 				{ fullscreenEnabled &&
 					<MenuItem
 						aria-label={intl.formatMessage({
@@ -1288,7 +1368,10 @@ TopBar.propTypes =
 	recordingMimeType    : PropTypes.string,
 	producers            : PropTypes.object,
 	consumers            : PropTypes.object,
-	recordingConsents    : PropTypes.array
+	recordingConsents    : PropTypes.array,
+	setDemocraticView    : PropTypes.func.isRequired,
+	setFilmstripView     : PropTypes.func.isRequired
+
 };
 
 const makeMapStateToProps = () =>
@@ -1387,6 +1470,14 @@ const mapDispatchToProps = (dispatch) =>
 		closeNotification : (notificationId) =>
 		{
 			dispatch(notificationActions.closeNotification(notificationId));
+		},
+		setDemocraticView : () =>
+		{
+			dispatch(roomActions.setDisplayMode('democratic'));
+		},
+		setFilmstripView : () =>
+		{
+			dispatch(roomActions.setDisplayMode('filmstrip'));
 		}
 	});
 
