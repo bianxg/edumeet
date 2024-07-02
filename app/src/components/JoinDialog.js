@@ -303,6 +303,8 @@ const JoinDialog = ({
 	};
 
 	// TODO: prefix with the Edumeet server HTTP endpoint
+
+	/*
 	fetch('/auth/check_login_status', {
 		credentials    : 'include',
 		method         : 'GET',
@@ -321,6 +323,7 @@ const JoinDialog = ({
 		{
 			logger.error('Error checking login status', error);
 		});
+	*/
 
 	return (
 		<div className={classes.root}>
