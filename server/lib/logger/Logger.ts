@@ -40,7 +40,13 @@ export default class Logger {
 				hour12: false
 			};
 			const formattedDate = `${now.toLocaleString(undefined, options)}.${now.getMilliseconds().toString().padStart(3, '0')}`;
-			console.log(`[${formattedDate}]`, ...args);
+
+			// console.log(`[${formattedDate}]`, ...args);
+			// 格式化字符串和占位符被分开了，导致占位符不能正确替换。
+			// 需要将 formattedDate 和第一个日志参数（即包含占位符的字符串）合并成一个字符串，
+			// 然后将其余的参数传递给 console.log
+			// 下面slice(1)从 args 数组中获取从索引 1 开始的所有元素，返回一个新数组。
+			console.log(`[${formattedDate}]${args[0]}`, ...args.slice(1));
 		};
 		return logger;
 	}
