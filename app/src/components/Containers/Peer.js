@@ -77,7 +77,7 @@ const styles = (theme) =>
 			alignItems      : 'flex-end',
 			padding         : theme.spacing(1),
 			zIndex          : 21,
-			opacity         : 1,
+			opacity         : 0,
 			transition      : 'opacity 0.3s',
 			touchAction     : 'none',
 			'&.hover'       :
