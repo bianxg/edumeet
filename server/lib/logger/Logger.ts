@@ -1,6 +1,6 @@
 import debug from 'debug';
 
-const APP_NAME = 'edumeet-server';
+const APP_NAME = 'edumeet';
 
 export default class Logger
 {

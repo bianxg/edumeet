@@ -28,7 +28,7 @@ import { persistor, store } from './store/store';
 import { SnackbarProvider } from 'notistack';
 import * as serviceWorker from './serviceWorker';
 import { LazyPreload } from './components/Loader/LazyPreload';
-import { detectDevice } from 'mediasoup-client';
+import { version as mediasoupVersin, detectDevice } from 'mediasoup-client';
 import { recorder } from './BrowserRecorder';
 
 import './index.css';
@@ -88,6 +88,7 @@ domready(() =>
 function run()
 {
 	logger.debug('run() [environment:%s]', process.env.NODE_ENV);
+	logger.debug('mediasoup-client verison:%s', mediasoupVersin);
 
 	const peerId = randomString({ length: 8 }).toLowerCase();
 	const urlParser = new URL(window.location);
