@@ -408,7 +408,7 @@ class Room extends EventEmitter
 
 	_handleOverRoomLimit(peer)
 	{
-		this._notification(peer.socket, 'overRoomLimit');
+		this._notification(peer, 'overRoomLimit');
 	}
 
 	_handleGuest(peer)
@@ -418,7 +418,7 @@ class Room extends EventEmitter
 		else
 		{
 			this._parkPeer(peer);
-			this._notification(peer.socket, 'signInRequired');
+			this._notification(peer, 'signInRequired');
 		}
 	}
 
@@ -434,7 +434,7 @@ class Room extends EventEmitter
 
 			for (const peer of this._getAllowedPeers(PROMOTE_PEER))
 			{
-				this._notification(peer.socket, 'lobby:promotedPeer', { peerId: id });
+				this._notification(peer, 'lobby:promotedPeer', { peerId: id });
 			}
 		});
 
@@ -465,7 +465,7 @@ class Room extends EventEmitter
 
 			for (const peer of this._getAllowedPeers(PROMOTE_PEER))
 			{
-				this._notification(peer.socket, 'lobby:changeDisplayName', { peerId: id, displayName });
+				this._notification(peer, 'lobby:changeDisplayName', { peerId: id, displayName });
 			}
 		});
 
@@ -475,7 +475,7 @@ class Room extends EventEmitter
 
 			for (const peer of this._getAllowedPeers(PROMOTE_PEER))
 			{
-				this._notification(peer.socket, 'lobby:changePicture', { peerId: id, picture });
+				this._notification(peer, 'lobby:changePicture', { peerId: id, picture });
 			}
 		});
 
@@ -487,7 +487,7 @@ class Room extends EventEmitter
 
 			for (const peer of this._getAllowedPeers(PROMOTE_PEER))
 			{
-				this._notification(peer.socket, 'lobby:peerClosed', { peerId: id });
+				this._notification(peer, 'lobby:peerClosed', { peerId: id });
 			}
 		});
 
@@ -530,7 +530,7 @@ class Room extends EventEmitter
 			for (const peer of this.getJoinedPeers())
 			{
 				this._notification(
-					peer.socket,
+					peer,
 					'activeSpeaker',
 					{
 						peerId : peerId,
@@ -600,11 +600,11 @@ class Room extends EventEmitter
 
 			if (producerPaused)
 			{
-				this._notification(peer.socket, 'producerPauseReq');
+				this._notification(peer, 'producerPauseReq');
 			}
 			else
 			{
-				this._notification(peer.socket, 'producerResumeReq');
+				this._notification(peer, 'producerResumeReq');
 			}
 			producer.appData.paused = producerPaused;
 		}
@@ -613,7 +613,7 @@ class Room extends EventEmitter
 		{
 			// logger.debug('producer preferLayer: %d', producerPreferredLayer);
 
-			this._notification(peer.socket, 'maxSendingSpatialLayer', {
+			this._notification(peer, 'maxSendingSpatialLayer', {
 				peerId       : peer.id,
 				spatialLayer : producerPreferredLayer });
 
@@ -685,7 +685,7 @@ class Room extends EventEmitter
 
 		for (const peer of this._getAllowedPeers(PROMOTE_PEER))
 		{
-			this._notification(peer.socket, 'parkedPeer', { peerId: parkPeer.id });
+			this._notification(peer, 'parkedPeer', { peerId: parkPeer.id });
 		}
 	}
 
@@ -707,7 +707,7 @@ class Room extends EventEmitter
 
 			if (returning)
 			{
-				this._notification(peer.socket, 'roomBack');
+				this._notification(peer, 'roomBack');
 			}
 			else
 			{
@@ -753,7 +753,7 @@ class Room extends EventEmitter
 					turnServers = config.backupTurnServers;
 				}
 
-				this._notification(peer.socket, 'roomReady', { turnServers });
+				this._notification(peer, 'roomReady', { turnServers });
 
 				if (config.activateOnHostJoin && this._lobby.peerList().length > 0 &&
 					!this._locked && peer.roles.some((role) =>
@@ -785,7 +785,7 @@ class Room extends EventEmitter
 				return;
 
 			// Spread to others
-			this._notification(peer.socket, 'changeDisplayName', {
+			this._notification(peer, 'changeDisplayName', {
 				peerId         : peer.id,
 				displayName    : peer.displayName,
 				oldDisplayName : oldDisplayName
@@ -799,7 +799,7 @@ class Room extends EventEmitter
 				return;
 
 			// Spread to others
-			this._notification(peer.socket, 'changePicture', {
+			this._notification(peer, 'changePicture', {
 				peerId  : peer.id,
 				picture : peer.picture
 			}, true);
@@ -812,7 +812,7 @@ class Room extends EventEmitter
 				return;
 
 			// Spread to others
-			this._notification(peer.socket, 'gotRole', {
+			this._notification(peer, 'gotRole', {
 				peerId : peer.id,
 				roleId : newRole.id
 			}, true, true);
@@ -823,7 +823,7 @@ class Room extends EventEmitter
 			{
 				const lobbyPeers = this._lobby.peerList();
 
-				lobbyPeers.length > 0 && this._notification(peer.socket, 'parkedPeers', {
+				lobbyPeers.length > 0 && this._notification(peer, 'parkedPeers', {
 					lobbyPeers
 				});
 			}
@@ -836,7 +836,7 @@ class Room extends EventEmitter
 				return;
 
 			// Spread to others
-			this._notification(peer.socket, 'lostRole', {
+			this._notification(peer, 'lostRole', {
 				peerId : peer.id,
 				roleId : oldRole.id
 			}, true, true);
@@ -881,7 +881,7 @@ class Room extends EventEmitter
 
 		// If the Peer was joined, notify all Peers.
 		if (peer.joined)
-			this._notification(peer.socket, 'peerClosed', { peerId: peer.id }, true);
+			this._notification(peer, 'peerClosed', { peerId: peer.id }, true);
 
 		// Remove from lastN
 		this._lastN = this._lastN.filter((id) => id !== peer.id);
@@ -906,7 +906,7 @@ class Room extends EventEmitter
 
 			for (const allowedPeer of this._getAllowedPeers(PROMOTE_PEER))
 			{
-				this._notification(allowedPeer.socket, 'parkedPeers', { lobbyPeers });
+				this._notification(allowedPeer, 'parkedPeers', { lobbyPeers });
 			}
 		}
 
@@ -1006,7 +1006,7 @@ class Room extends EventEmitter
 				for (const otherPeer of this.getJoinedPeers(peer))
 				{
 					this._notification(
-						otherPeer.socket,
+						otherPeer,
 						'newPeer',
 						{ ...peer.peerInfo, returning }
 					);
@@ -1204,7 +1204,7 @@ class Room extends EventEmitter
 				// Set Producer events.
 				producer.on('score', (score) =>
 				{
-					this._notification(peer.socket, 'producerScore', { producerId: producer.id, score });
+					this._notification(peer, 'producerScore', { producerId: producer.id, score });
 				});
 
 				producer.on('videoorientationchange', (videoOrientation) =>
@@ -1504,7 +1504,7 @@ class Room extends EventEmitter
 				peer.picture = picture;
 
 				// Spread to others
-				this._notification(peer.socket, 'changePicture', {
+				this._notification(peer, 'changePicture', {
 					peerId  : peer.id,
 					picture : picture
 				}, true);
@@ -1525,7 +1525,7 @@ class Room extends EventEmitter
 				this._chatHistory.push(chatMessage);
 
 				// Spread to others
-				this._notification(peer.socket, 'chatMessage', {
+				this._notification(peer, 'chatMessage', {
 					peerId      : peer.id,
 					chatMessage : chatMessage
 				}, true);
@@ -1607,7 +1607,7 @@ class Room extends EventEmitter
 				this._fileHistory = [];
 
 				// Spread to others
-				this._notification(peer.socket, 'moderator:clearChat', null, true);
+				this._notification(peer, 'moderator:clearChat', null, true);
 
 				// Return no error
 				cb();
@@ -1629,7 +1629,7 @@ class Room extends EventEmitter
 				try
 				{
 					// Spread to others
-					this._notification(peer.socket, 'setLocalRecording', {
+					this._notification(peer, 'setLocalRecording', {
 						peerId : peer.id,
 						localRecordingState
 					}, true);
@@ -1653,7 +1653,7 @@ class Room extends EventEmitter
 				this._locked = true;
 
 				// Spread to others
-				this._notification(peer.socket, 'lockRoom', {
+				this._notification(peer, 'lockRoom', {
 					peerId : peer.id
 				}, true);
 
@@ -1668,7 +1668,7 @@ class Room extends EventEmitter
 				const { consent } = request.data;
 				// Spread to others
 
-				this._notification(peer.socket, 'addConsentForRecording', {
+				this._notification(peer, 'addConsentForRecording', {
 					peerId  : peer.id,
 					consent : consent
 				}, true);
@@ -1687,7 +1687,7 @@ class Room extends EventEmitter
 				this._locked = false;
 
 				// Spread to others
-				this._notification(peer.socket, 'unlockRoom', {
+				this._notification(peer, 'unlockRoom', {
 					peerId : peer.id
 				}, true);
 
@@ -1705,7 +1705,7 @@ class Room extends EventEmitter
 
 				// Spread to others
 				// if (request.public) {
-				this._notification(peer.socket, 'setAccessCode', {
+				this._notification(peer, 'setAccessCode', {
 					peerId     : peer.id,
 					accessCode : accessCode
 				}, true);
@@ -1724,7 +1724,7 @@ class Room extends EventEmitter
 				this._joinByAccessCode = joinByAccessCode;
 
 				// Spread to others
-				this._notification(peer.socket, 'setJoinByAccessCode', {
+				this._notification(peer, 'setJoinByAccessCode', {
 					peerId           : peer.id,
 					joinByAccessCode : joinByAccessCode
 				}, true);
@@ -1775,7 +1775,7 @@ class Room extends EventEmitter
 
 				// Spread to others
 				this._notification(
-					peer.socket,
+					peer,
 					'sendFile', { ...file },
 					true
 				);
@@ -1793,7 +1793,7 @@ class Room extends EventEmitter
 				peer.raisedHand = raisedHand;
 
 				// Spread to others
-				this._notification(peer.socket, 'raisedHand', {
+				this._notification(peer, 'raisedHand', {
 					peerId              : peer.id,
 					raisedHand          : raisedHand,
 					raisedHandTimestamp : peer.raisedHandTimestamp
@@ -1817,7 +1817,7 @@ class Room extends EventEmitter
 				if (!mutePeer)
 					throw new Error(`peer with id "${peerId}" not found`);
 
-				this._notification(mutePeer.socket, 'moderator:mute');
+				this._notification(mutePeer, 'moderator:mute');
 
 				cb();
 
@@ -1830,7 +1830,7 @@ class Room extends EventEmitter
 					throw new Error('peer not authorized');
 
 				// Spread to others
-				this._notification(peer.socket, 'moderator:mute', null, true);
+				this._notification(peer, 'moderator:mute', null, true);
 
 				cb();
 
@@ -1862,7 +1862,7 @@ class Room extends EventEmitter
 					throw new Error('peer not authorized');
 
 				// Spread to others
-				this._notification(peer.socket, 'moderator:stopVideo', null, true);
+				this._notification(peer, 'moderator:stopVideo', null, true);
 
 				cb();
 
@@ -1875,7 +1875,7 @@ class Room extends EventEmitter
 					throw new Error('peer not authorized');
 
 				// Spread to others
-				this._notification(peer.socket, 'moderator:stopScreenSharing', null, true);
+				this._notification(peer, 'moderator:stopScreenSharing', null, true);
 
 				cb();
 
@@ -1894,7 +1894,7 @@ class Room extends EventEmitter
 				if (!stopVideoPeer)
 					throw new Error(`peer with id "${peerId}" not found`);
 
-				this._notification(stopVideoPeer.socket, 'moderator:stopScreenSharing');
+				this._notification(stopVideoPeer, 'moderator:stopScreenSharing');
 
 				cb();
 
@@ -1906,7 +1906,7 @@ class Room extends EventEmitter
 				if (!this._hasPermission(peer, MODERATE_ROOM))
 					throw new Error('peer not authorized');
 
-				this._notification(peer.socket, 'moderator:kick', null,	true);
+				this._notification(peer, 'moderator:kick', null,	true);
 
 				cb();
 
@@ -1928,7 +1928,7 @@ class Room extends EventEmitter
 				if (!kickPeer)
 					throw new Error(`peer with id "${peerId}" not found`);
 
-				this._notification(kickPeer.socket, 'moderator:kick');
+				this._notification(kickPeer, 'moderator:kick');
 
 				kickPeer.close();
 
@@ -1949,7 +1949,7 @@ class Room extends EventEmitter
 				if (!lowerPeer)
 					throw new Error(`peer with id "${peerId}" not found`);
 
-				this._notification(lowerPeer.socket, 'moderator:lowerHand');
+				this._notification(lowerPeer, 'moderator:lowerHand');
 
 				cb();
 
@@ -2063,7 +2063,7 @@ class Room extends EventEmitter
 				this._calcProducerPreferredLayer(producerPeer, producer, 'consumer removed');
 			}
 
-			this._notification(consumerPeer.socket, 'consumerClosed', { consumerId: consumer.id });
+			this._notification(consumerPeer, 'consumerClosed', { consumerId: consumer.id });
 		});
 
 		consumer.on('producerclose', () =>
@@ -2071,28 +2071,28 @@ class Room extends EventEmitter
 			// Remove from its map.
 			consumerPeer.removeConsumer(consumer.id);
 
-			this._notification(consumerPeer.socket, 'consumerClosed', { consumerId: consumer.id });
+			this._notification(consumerPeer, 'consumerClosed', { consumerId: consumer.id });
 		});
 
 		consumer.on('producerpause', () =>
 		{
-			this._notification(consumerPeer.socket, 'consumerPaused', { consumerId: consumer.id });
+			this._notification(consumerPeer, 'consumerPaused', { consumerId: consumer.id });
 		});
 
 		consumer.on('producerresume', () =>
 		{
-			this._notification(consumerPeer.socket, 'consumerResumed', { consumerId: consumer.id });
+			this._notification(consumerPeer, 'consumerResumed', { consumerId: consumer.id });
 		});
 
 		consumer.on('score', (score) =>
 		{
-			this._notification(consumerPeer.socket, 'consumerScore', { consumerId: consumer.id, score });
+			this._notification(consumerPeer, 'consumerScore', { consumerId: consumer.id, score });
 		});
 
 		consumer.on('layerschange', (layers) =>
 		{
 			this._notification(
-				consumerPeer.socket,
+				consumerPeer,
 				'consumerLayersChanged',
 				{
 					consumerId    : consumer.id,
@@ -2106,7 +2106,7 @@ class Room extends EventEmitter
 		try
 		{
 			this._notification(
-				consumerPeer.socket,
+				consumerPeer,
 				'newConsumer',
 				{
 					peerId         : producerPeer.id,
@@ -2266,28 +2266,28 @@ class Room extends EventEmitter
 		}
 	}
 
-	_notification(socket, method, data = {}, broadcast = false, includeSender = false)
+	_notification(peer, method, data = {}, broadcast = false, includeSender = false)
 	{
 		if (method === 'consumerScore' || method === 'producerScore') 
 		{
 		}
 		else
 		{ 
-			logger.debug('_notification() [method:"%s", data:"%o"]', method, data);
+			logger.debug('notify peer [method:"%s", peerId:"%s", data:"%s"]', method, peer.id, JSON.stringify(data));
 		}
 
 		if (broadcast)
 		{
-			socket.broadcast.to(this._roomId).emit(
+			peer.socket.broadcast.to(this._roomId).emit(
 				'notification', { method, data }
 			);
 
 			if (includeSender)
-				socket.emit('notification', { method, data });
+				peer.socket.emit('notification', { method, data });
 		}
 		else
 		{
-			socket.emit('notification', { method, data });
+			peer.socket.emit('notification', { method, data });
 		}
 	}
 

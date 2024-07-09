@@ -76,7 +76,7 @@ export default class Spotlights
 
 		if (this._peerList.indexOf(id) === -1) // We don't have this peer in the list
 		{
-			logger.debug('_handlePeer() | adding peer [peerId: "%s"]', id);
+			logger.debug('newPeer() | adding peer [peerId: "%s"]', id);
 
 			this._peerList.push(id);
 

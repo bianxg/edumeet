@@ -185,7 +185,7 @@ class Lobby extends EventEmitter
 
 		peer.on('close', peer.closeHandler);
 
-		this._notification(peer.socket, 'enteredLobby');
+		this._notification(peer, 'enteredLobby');
 	}
 
 	async _handleSocketRequest(peer, request, cb)
@@ -225,17 +225,17 @@ class Lobby extends EventEmitter
 		}
 	}
 
-	_notification(socket, method, data = {}, broadcast = false)
+	_notification(peer, method, data = {}, broadcast = false)
 	{
 		if (broadcast)
 		{
-			socket.broadcast.to(this._roomId).emit(
+			peer.socket.broadcast.to(this._roomId).emit(
 				'notification', { method, data }
 			);
 		}
 		else
 		{
-			socket.emit('notification', { method, data });
+			peer.socket.emit('notification', { method, data });
 		}
 	}
 }
