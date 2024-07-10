@@ -1158,7 +1158,7 @@ class Room extends EventEmitter
 				// the 'loudest' event of the audioLevelObserver.
 				appData = { ...appData, peerId: peer.id };
 
-				if (kind === 'video' && appData.resolutionScalings.length > 0)
+				if (kind === 'video' && appData.resolutionScalings && appData.resolutionScalings.length > 0)
 				{
 					const consumersPauseState = new Map();
 					const consumersPreferredLayer = new Map();
@@ -2273,7 +2273,8 @@ class Room extends EventEmitter
 		}
 		else
 		{ 
-			logger.debug('notify peer [method:"%s", peerId:"%s", data:"%s"]', method, peer.id, JSON.stringify(data));
+			//logger.debug('notify peer [method:"%s", peerId:"%s", data:"%s"]', method, peer.id, JSON.stringify(data));
+			logger.debug('notify peer [method:"%s", peerId:"%s"]', method, peer.id);
 		}
 
 		if (broadcast)
