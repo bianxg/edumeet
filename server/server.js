@@ -30,8 +30,8 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
 // Use mediasoup_3.10.5 source code
-//const mediasoup = require('mediasoup');
-const mediasoup = require('../../../mediasoup/node/lib/index.js');
+const mediasoup = require('mediasoup');
+//const mediasoup = require('../../../mediasoup/node/lib/index.js');
 const AwaitQueue = require('awaitqueue');
 const base64 = require('base-64');
 const helmet = require('helmet');
@@ -61,6 +61,7 @@ const redisClient = redis.createClient(config.redisOptions);
 console.log('- process.env.DEBUG:', process.env.DEBUG);
 console.log('- config.mediasoup.worker.logLevel:', config.mediasoup.worker.logLevel);
 console.log('- config.mediasoup.worker.logTags:', config.mediasoup.worker.logTags);
+console.log('- mediasoup version:', mediasoup.version);
 /* eslint-enable no-console */
 
 const logger = new Logger();
