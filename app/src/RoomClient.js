@@ -1466,8 +1466,10 @@ export default class RoomClient
 
 		try
 		{
+			/*
 			if (!this._mediasoupDevice.canProduce('audio'))
 				throw new Error('cannot produce audio');
+			*/
 
 			if (newDeviceId && !restart)
 				throw new Error('changing device requires restart');
