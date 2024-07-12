@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import * as appPropTypes from '../appPropTypes';
 import { withStyles } from '@material-ui/core/styles';
@@ -30,8 +30,11 @@ import Switch from '@material-ui/core/Switch';
 import ImageUploader from 'react-images-upload';
 import Resizer from 'react-image-file-resizer';
 import { config } from '../../config';
+import Logger from '../../Logger';
 
 const insertableStreamsSupported = Boolean(RTCRtpSender.prototype.createEncodedStreams);
+
+const logger = new Logger('MediaSetting');
 
 const NoiseSlider = withStyles(
 	{
@@ -210,6 +213,13 @@ const MediaSettings = ({
 		audioOutputDevices = Object.values(me.audioOutputDevices);
 	else
 		audioOutputDevices = [];
+
+	useEffect(() =>
+	{
+		// do once, after initial render, like `componentDidMount()`
+
+		roomClient.updateWebcam({ restart: true });
+	}, []);
 
 	return (
 		<React.Fragment>

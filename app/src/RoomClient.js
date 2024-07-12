@@ -23,6 +23,7 @@ import { createIntl } from 'react-intl';
 import * as recorderActions from './store/actions/recorderActions';
 import { directReceiverTransform, opusReceiverTransform } from './transforms/receiver';
 import { config } from './config';
+import * as mediasoupClient from 'mediasoup-client';
 
 let createTorrent;
 
@@ -30,7 +31,7 @@ let WebTorrent;
 
 let saveAs;
 
-let mediasoupClient;
+// let mediasoupClient;
 
 let io;
 
@@ -296,7 +297,8 @@ export default class RoomClient
 
 		// mediasoup-client Device instance.
 		// @type {mediasoupClient.Device}
-		this._mediasoupDevice = null;
+		// this._mediasoupDevice = null;
+		this._mediasoupDevice = new mediasoupClient.Device();
 
 		// Put the browser info into state
 		store.dispatch(meActions.setBrowser(device));
@@ -1672,8 +1674,10 @@ export default class RoomClient
 
 		try
 		{
+			/*
 			if (!this._mediasoupDevice.canProduce('video'))
 				throw new Error('cannot produce video');
+			*/
 
 			if (newDeviceId && !restart)
 				throw new Error('changing device requires restart');
@@ -2661,12 +2665,12 @@ export default class RoomClient
 			'./ScreenShare'
 		));
 
-		mediasoupClient = await import(
+		// mediasoupClient = await import(
 
-			/* webpackPrefetch: true */
-			/* webpackChunkName: "mediasoup" */
-			'mediasoup-client'
-		);
+		//	/* webpackPrefetch: true */
+		//	/* webpackChunkName: "mediasoup" */
+		//	'mediasoup-client'
+		// );
 
 		({ default: io } = await import(
 
@@ -3812,7 +3816,7 @@ export default class RoomClient
 					}));
 			});
 
-			this._mediasoupDevice = new mediasoupClient.Device();
+			// this._mediasoupDevice = new mediasoupClient.Device();
 
 			const routerRtpCapabilities =
 				await this.sendRequest('getRouterRtpCapabilities');
