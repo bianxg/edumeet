@@ -40,6 +40,9 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import { config } from '../config';
 import InfoIcon from '@material-ui/icons/Info';
+import * as roomActions from '../store/actions/roomActions';
+import Settings from './Settings/Settings';
+import SettingsIcon from '@material-ui/icons/Settings';
 
 const styles = (theme) =>
 	({
@@ -183,8 +186,8 @@ const JoinDialog = ({
 	setAudioMuted,
 	setVideoMuted,
 	locale,
-	localesList
-
+	localesList,
+	setSettingsOpen
 }) =>
 {
 	const location = useLocation();
@@ -443,6 +446,33 @@ const JoinDialog = ({
 								</Grid>
 								}
 								{/* /LOGIN BUTTON */}
+
+								{/* CONFIG BUTTON */}
+								<Grid item>
+									<Grid container direction='column' alignItems='center'>
+										<Grid item>
+											<Tooltip
+												title={intl.formatMessage({
+													id             : 'tooltip.settings',
+													defaultMessage : 'Show settings'
+												})}
+											>
+												<IconButton
+													aria-label={intl.formatMessage({
+														id             : 'tooltip.settings',
+														defaultMessage : 'Show settings'
+													})}
+													className={classes.actionButton}
+													color='inherit'
+													onClick={() => setSettingsOpen(!room.settingsOpen)}
+												>
+													<SettingsIcon />
+												</IconButton>
+											</Tooltip>
+										</Grid>
+									</Grid>
+								</Grid>
+								{/* CONFIG BUTTON */}
 							</Grid>
 						</Grid>
 					</Grid>
@@ -815,6 +845,11 @@ const JoinDialog = ({
 					</CookieConsent>
 				}
 			</Dialog>
+
+			{ room.settingsOpen &&
+				<Settings />
+			}
+
 		</div>
 	);
 };
@@ -835,7 +870,8 @@ JoinDialog.propTypes =
 	setAudioMuted         : PropTypes.func.isRequired,
 	setVideoMuted         : PropTypes.func.isRequired,
 	locale                : PropTypes.string.isRequired,
-	localesList           : PropTypes.array.isRequired
+	localesList           : PropTypes.array.isRequired,
+	setSettingsOpen       : PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state) =>
@@ -872,8 +908,11 @@ const mapDispatchToProps = (dispatch) =>
 		setVideoMuted : (flag) =>
 		{
 			dispatch(settingsActions.setVideoMuted(flag));
+		},
+		setSettingsOpen : (settingsOpen) =>
+		{
+			dispatch(roomActions.setSettingsOpen(settingsOpen));
 		}
-
 	};
 };
 
@@ -885,6 +924,7 @@ export default withRoomContext(connect(
 		areStatesEqual : (next, prev) =>
 		{
 			return (
+				prev.room.settingsOpen === next.room.settingsOpen &&
 				prev.room.inLobby === next.room.inLobby &&
 				prev.room.signInRequired === next.room.signInRequired &&
 				prev.room.overRoomLimit === next.room.overRoomLimit &&
