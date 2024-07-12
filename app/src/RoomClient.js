@@ -635,6 +635,15 @@ export default class RoomClient
 		});
 	}
 
+	async getDevices()
+	{
+		logger.debug('getDevices()');
+
+		await this._updateAudioDevices();
+		await this._updateWebcams();
+		await this._updateAudioOutputDevices();
+	}
+
 	setLocale(locale)
 	{
 

@@ -218,8 +218,7 @@ const MediaSettings = ({
 	{
 		// do once, after initial render, like `componentDidMount()`
 
-		roomClient.updateWebcam({ restart: true });
-		roomClient.updateMic();
+		roomClient.getDevices();
 	}, []);
 
 	return (
