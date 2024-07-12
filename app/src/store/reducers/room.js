@@ -41,7 +41,8 @@ const initialState =
 	clearFileSharingInProgress    : false,
 	roomPermissions               : null,
 	userRoles                     : null,
-	allowWhenRoleMissing          : null
+	allowWhenRoleMissing          : null,
+	creationTimestamp             : null
 };
 
 const room = (state = initialState, action) =>
@@ -188,8 +189,9 @@ const room = (state = initialState, action) =>
 		case 'TOGGLE_JOINED':
 		{
 			const joined = true;
+			const { creationTimestamp } = action.payload;
 
-			return { ...state, joined };
+			return { ...state, joined, creationTimestamp };
 		}
 
 		case 'TOGGLE_FULLSCREEN_CONSUMER':

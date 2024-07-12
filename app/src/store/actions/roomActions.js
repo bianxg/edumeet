@@ -164,9 +164,10 @@ export const clearSpotlights = () =>
 		type : 'CLEAR_SPOTLIGHTS'
 	});
 
-export const toggleJoined = () =>
+export const toggleJoined = (creationTimestamp) =>
 	({
-		type : 'TOGGLE_JOINED'
+		type    : 'TOGGLE_JOINED',
+		payload : { creationTimestamp }
 	});
 
 export const toggleConsumerFullscreen = (consumerId) =>

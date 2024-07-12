@@ -2914,7 +2914,7 @@ export default class RoomClient
 
 						this._turnServers = turnServers;
 
-						store.dispatch(roomActions.toggleJoined());
+						store.dispatch(roomActions.toggleJoined(Date.now()));
 						store.dispatch(roomActions.setInLobby(false));
 
 						await this._joinRoom({ joinVideo, joinAudio });

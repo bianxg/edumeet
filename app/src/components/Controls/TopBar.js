@@ -56,6 +56,7 @@ import { recorder } from './../../BrowserRecorder';
 
 import Logger from '../../Logger';
 import { config } from '../../config';
+import { formatDuration } from '../../utils';
 
 const logger = new Logger('Recorder');
 
@@ -218,6 +219,7 @@ const TopBar = (props) =>
 	const [ currentMenu, setCurrentMenu ] = useState(null);
 	const [ recordingNotificationsId,
 		setRecordingNotificationsId ] = useState(null);
+	const [ meetingDuration, setMeetingDuration ] = useState(0);
 
 	const handleExited = () =>
 	{
@@ -351,6 +353,29 @@ const TopBar = (props) =>
 		addNotification, closeNotification, intl, meId, recordingPeers, roomClient,
 		room
 	]);
+
+	useEffect(() =>
+	{
+		if (room.creationTimestamp)
+		{
+			const interval = 1000;
+
+			let expected = Date.now() + interval;
+
+			const driftAwareTimer = () =>
+			{
+				const dt = Date.now() - expected;
+
+				expected += interval;
+				setMeetingDuration(Date.now() - room.creationTimestamp);
+				setTimeout(driftAwareTimer, Math.max(0, interval - dt));
+			};
+
+			const computeDuration = setTimeout(driftAwareTimer, interval);
+
+			return () => clearTimeout(computeDuration);
+		}
+	}, []);
 
 	const isMenuOpen = Boolean(anchorEl);
 	const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -614,6 +639,14 @@ const TopBar = (props) =>
 								</IconButton>
 							</span>
 						</Tooltip>
+						<Button
+							aria-label={locale.split(/[-_]/)[0]}
+							className={classes.actionButton}
+							color='secondary'
+							disableRipple
+						>
+							{ formatDuration(meetingDuration) }
+						</Button>
 						{ lobbyPeers.length > 0 &&
 							<Tooltip
 								title={intl.formatMessage({
@@ -1327,8 +1360,8 @@ TopBar.propTypes =
 {
 	roomClient           : PropTypes.object.isRequired,
 	room                 : appPropTypes.Room.isRequired,
-	isSafari         			 : PropTypes.bool,
-	meId         				    : PropTypes.string,
+	isSafari             : PropTypes.bool,
+	meId                 : PropTypes.string,
 	isMobile             : PropTypes.bool.isRequired,
 	peersLength          : PropTypes.number,
 	lobbyPeers           : PropTypes.array,
