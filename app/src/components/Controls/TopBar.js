@@ -640,10 +640,8 @@ const TopBar = (props) =>
 							</span>
 						</Tooltip>
 						<Button
-							aria-label={locale.split(/[-_]/)[0]}
-							className={classes.actionButton}
-							color='secondary'
-							disableRipple
+							className={classes.disabledButton}
+							color='inherit'
 						>
 							{ formatDuration(meetingDuration) }
 						</Button>
