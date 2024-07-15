@@ -395,6 +395,8 @@ export default class RoomClient
 			});
 		}
 
+		this._previewWebcamTrack = null;
+
 	}
 
 	close()
@@ -1661,6 +1663,81 @@ export default class RoomClient
 		}
 
 		store.dispatch(meActions.setAudioInProgress(false));
+	}
+
+	async updatePreviewWebcam({ newDeviceId = null } = {})
+	{
+		logger.debug('updatePreviewWebcam() [newDeviceId:"%s"]', newDeviceId);
+
+		store.dispatch(meActions.setWebcamInProgress(true));
+
+		let track;
+		const replace = Boolean(this._previewWebcamTrack);
+
+		try
+		{
+			const deviceId = this._getWebcamDeviceId();
+
+			if (!deviceId)
+				logger.warn('updatePreviewWebcam() no webcam devices');
+
+			if (replace)
+			{
+				this._previewWebcamTrack.stop();
+				this._previewWebcamTrack = null;
+			}
+
+			const stream = await navigator.mediaDevices.getUserMedia({
+				video : {
+					deviceId : { ideal: deviceId }
+				}
+			});
+
+			([ track ] = stream.getVideoTracks());
+
+			if (!track) throw new Error('no webcam track');
+
+			this._previewWebcamTrack = track;
+
+			logger.warn('updatePreviewWebcam() get track ok!');
+
+			this.getDevices();
+
+		}
+		catch (error)
+		{
+			logger.error('updatePreviewWebcam() [error:"%o"]', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : intl.formatMessage({
+						id             : 'devices.cameraError',
+						defaultMessage : 'An error occurred while accessing your camera'
+					})
+				}));
+
+			if (track)
+				track.stop();
+		}
+
+		store.dispatch(meActions.setWebcamInProgress(false));
+	}
+	async stopPreviewWebcam()
+	{
+		logger.debug('stopPreviewWebcam()');
+
+		store.dispatch(meActions.setWebcamInProgress(true));
+
+		const track = this._previewWebcamTrack;
+
+		if (track)
+		{
+			track.stop();
+			this._previewWebcamTrack = null;
+		}
+
+		store.dispatch(meActions.setWebcamInProgress(false));
 	}
 
 	async updateWebcam({

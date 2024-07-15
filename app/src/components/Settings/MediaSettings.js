@@ -217,8 +217,13 @@ const MediaSettings = ({
 	useEffect(() =>
 	{
 		// do once, after initial render, like `componentDidMount()`
+		roomClient.updatePreviewWebcam();
+		// roomClient.getDevices();
 
-		roomClient.getDevices();
+		return () =>
+		{
+			roomClient.stopPreviewWebcam();
+		};
 	}, []);
 
 	return (
