@@ -218,11 +218,12 @@ const MediaSettings = ({
 	{
 		// do once, after initial render, like `componentDidMount()`
 		roomClient.updatePreviewWebcam();
-		// roomClient.getDevices();
+		roomClient.updatePreviewMic();
 
 		return () =>
 		{
 			roomClient.stopPreviewWebcam();
+			roomClient.stopPreviewMic();
 		};
 	}, []);
 

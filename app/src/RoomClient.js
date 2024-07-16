@@ -396,6 +396,7 @@ export default class RoomClient
 		}
 
 		this._previewWebcamTrack = null;
+		this._previewMicTrack = null;
 
 	}
 
@@ -1457,6 +1458,102 @@ export default class RoomClient
 			meActions.setAudioOutputInProgress(false));
 	}
 
+	async updatePreviewMic({ newDeviceId = null } = {})
+	{
+		logger.debug('updatePreviewMic() [newDeviceId:"%s"]', newDeviceId);
+
+		let track;
+
+		const replace = Boolean(this._previewMicTrack);
+
+		try
+		{
+			if (replace)
+			{
+				this._previewMicTrack.stop();
+				this._previewMicTrack = null;
+			}
+
+			if (newDeviceId)
+				store.dispatch(settingsActions.setSelectedAudioDevice(newDeviceId));
+
+			store.dispatch(meActions.setAudioInProgress(true));
+
+			const deviceId = await this._getAudioDeviceId();
+			const device = this._audioDevices[deviceId];
+
+			if (!device)
+				throw new Error('no audio devices');
+
+			const {
+				autoGainControl,
+				echoCancellation,
+				noiseSuppression,
+				sampleRate,
+				channelCount,
+				sampleSize
+			} = store.getState().settings;
+
+			const stream = await navigator.mediaDevices.getUserMedia(
+				{
+					audio : {
+						deviceId : { ideal: deviceId },
+						sampleRate,
+						channelCount,
+						autoGainControl,
+						echoCancellation,
+						noiseSuppression,
+						sampleSize
+					}
+				}
+			);
+
+			([ track ] = stream.getAudioTracks());
+
+			if (!track) throw new Error('no mic track');
+
+			this._previewMicTrack = track;
+
+			await this._updateAudioDevices();
+			await this._updateAudioOutputDevices();
+		}
+		catch (error)
+		{
+			logger.error('updatePreviewMic() [error:"%o"]', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : intl.formatMessage({
+						id             : 'devices.microphoneError',
+						defaultMessage : 'An error occurred while accessing your microphone'
+					})
+				}));
+
+			if (track)
+				track.stop();
+		}
+
+		store.dispatch(meActions.setAudioInProgress(false));
+	}
+
+	async stopPreviewMic()
+	{
+		logger.debug('stopPreviewMic()');
+
+		store.dispatch(meActions.setAudioInProgress(true));
+
+		const track = this._previewMicTrack;
+
+		if (track)
+		{
+			track.stop();
+			this._previewMicTrack = null;
+		}
+
+		store.dispatch(meActions.setAudioInProgress(false));
+	}
+
 	// Only Firefox supports applyConstraints to audio tracks
 	// See:
 	// https://bugs.chromium.org/p/chromium/issues/detail?id=796964
@@ -1699,9 +1796,7 @@ export default class RoomClient
 
 			this._previewWebcamTrack = track;
 
-			logger.warn('updatePreviewWebcam() get track ok!');
-
-			this.getDevices();
+			await this._updateWebcams();
 
 		}
 		catch (error)
@@ -5050,7 +5145,7 @@ export default class RoomClient
 
 	async _updateAudioDevices()
 	{
-		logger.debug('_updateAudioDevices()');
+		// logger.debug('_updateAudioDevices()');
 
 		// Reset the list.
 		this._audioDevices = {};
@@ -5080,7 +5175,7 @@ export default class RoomClient
 
 	async _updateWebcams()
 	{
-		logger.debug('_updateWebcams()');
+		// logger.debug('_updateWebcams()');
 
 		// Reset the list.
 		this._webcams = {};
@@ -5110,7 +5205,7 @@ export default class RoomClient
 
 	async _getAudioDeviceId()
 	{
-		logger.debug('_getAudioDeviceId()');
+		// logger.debug('_getAudioDeviceId()');
 
 		try
 		{
@@ -5137,7 +5232,7 @@ export default class RoomClient
 
 	async _getWebcamDeviceId()
 	{
-		logger.debug('_getWebcamDeviceId()');
+		// logger.debug('_getWebcamDeviceId()');
 
 		try
 		{
@@ -5164,7 +5259,7 @@ export default class RoomClient
 
 	async _updateAudioOutputDevices()
 	{
-		logger.debug('_updateAudioOutputDevices()');
+		// logger.debug('_updateAudioOutputDevices()');
 
 		// Reset the list.
 		this._audioOutputDevices = {};
