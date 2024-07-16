@@ -1773,7 +1773,9 @@ export default class RoomClient
 
 		try
 		{
-			const deviceId = this._getWebcamDeviceId();
+			const deviceId = await this._getWebcamDeviceId();
+
+			logger.debug('[deviceId:"%o"]', deviceId);
 
 			if (!deviceId)
 				logger.warn('updatePreviewWebcam() no webcam devices');
@@ -1795,6 +1797,12 @@ export default class RoomClient
 			if (!track) throw new Error('no webcam track');
 
 			this._previewWebcamTrack = track;
+
+			store.dispatch(meActions.setPreviewCameraTrack(track));
+
+			const { deviceId: trackDeviceId } = track.getSettings();
+
+			store.dispatch(settingsActions.setSelectedWebcamDevice(trackDeviceId));
 
 			await this._updateWebcams();
 

@@ -116,3 +116,9 @@ export const setAutoMuted = (flag) =>
 		type    : 'SET_AUTO_MUTED',
 		payload : { flag }
 	});
+
+export const setPreviewCameraTrack = (track) =>
+	({
+		type    : 'SET_PREVIEW_CAMERA_TRACK',
+		payload : { track }
+	});

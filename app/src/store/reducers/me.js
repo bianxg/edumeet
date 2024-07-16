@@ -19,7 +19,8 @@ const initialState =
 	raisedHandInProgress  : false,
 	loggedIn              : false,
 	isSpeaking            : false,
-	isAutoMuted           : true
+	isAutoMuted           : true,
+	previewWebcamTrack    : null
 };
 
 const me = (state = initialState, action) =>
@@ -165,6 +166,16 @@ const me = (state = initialState, action) =>
 			const { flag } = action.payload;
 
 			return { ...state, isAutoMuted: flag };
+		}
+
+		case 'SET_PREVIEW_CAMERA_TRACK':
+		{
+			const { track } = action.payload;
+
+			return {
+				...state,
+				previewWebcamTrack : track
+			};
 		}
 
 		default:

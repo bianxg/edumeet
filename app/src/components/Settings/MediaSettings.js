@@ -27,14 +27,15 @@ import ExpandMore from '@material-ui/icons/ExpandMore';
 import Mic from '@material-ui/icons/Mic';
 import Videocam from '@material-ui/icons/Videocam';
 import Switch from '@material-ui/core/Switch';
-import ImageUploader from 'react-images-upload';
-import Resizer from 'react-image-file-resizer';
+// import ImageUploader from 'react-images-upload';
+// import Resizer from 'react-image-file-resizer';
 import { config } from '../../config';
 import Logger from '../../Logger';
+import VideoView from '../VideoContainers/VideoView';
 
 const insertableStreamsSupported = Boolean(RTCRtpSender.prototype.createEncodedStreams);
 
-const logger = new Logger('MediaSetting');
+// const logger = new Logger('MediaSetting');
 
 const NoiseSlider = withStyles(
 	{
@@ -133,30 +134,6 @@ const MediaSettings = ({
 	const [ videoSettingsOpen, setVideoSettingsOpen ] = React.useState(false);
 	const [ currentSettingsTab, setSettingsTab ] = React.useState('videoSettings');
 
-	const onDrop = (picture) =>
-	{
-		if (picture.length > 0)
-		{
-			Resizer.imageFileResizer(picture[0], 1280, 720, 'JPEG', 99, 0,
-				(uri) =>
-				{
-					const reader = new FileReader();
-
-					reader.addEventListener('load', () =>
-					{
-						roomClient.setPicture(reader.result);
-					});
-
-					reader.readAsDataURL(uri);
-				},
-				'blob');
-		}
-		else
-		{
-			roomClient.setPicture(null);
-		}
-	};
-
 	const resolutions = [ {
 		value : 'low',
 		label : intl.formatMessage({
@@ -217,7 +194,7 @@ const MediaSettings = ({
 	useEffect(() =>
 	{
 		// do once, after initial render, like `componentDidMount()`
-		roomClient.updatePreviewWebcam();
+		roomClient.updatePreviewWebcam({ newDeviceId: settings.selectedWebcam });
 		roomClient.updatePreviewMic();
 
 		return () =>
@@ -230,31 +207,11 @@ const MediaSettings = ({
 	return (
 		<React.Fragment>
 
-			<ImageUploader
-				withIcon
-				onChange={onDrop}
-				imgExtension={[ '.jpg', '.jpeg', '.png' ]}
-				maxFileSize={5242880}
-				singleImage
-				withPreview
-				defaultImages={settings.localPicture?[ settings.localPicture ]:[]}
-				buttonType='button'
-				buttonText={intl.formatMessage({
-					id             : 'settings.myPhotoButton',
-					defaultMessage : 'Set my photo'
-				})}
-				label={intl.formatMessage({
-					id             : 'settings.myPhotoLabel',
-					defaultMessage : 'Max. file size: 5MB, accepted: jpg, jpeg, png'
-				})}
-				fileSizeError={intl.formatMessage({
-					id             : 'settings.myPhotoSizeError',
-					defaultMessage : ' file is too large'
-				})}
-				fileTypeError={intl.formatMessage({
-					id             : 'settings.myPhotoTypeError',
-					defaultMessage : ' is not a supported file extension'
-				})}
+			<VideoView
+				isMe
+				isMirrored
+				videoTrack={me.previewWebcamTrack}
+				videoVisible
 			/>
 
 			<Tabs

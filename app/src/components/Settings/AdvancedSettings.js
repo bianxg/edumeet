@@ -14,6 +14,9 @@ import Select from '@material-ui/core/Select';
 import Switch from '@material-ui/core/Switch';
 import { config } from '../../config';
 
+import Resizer from 'react-image-file-resizer';
+import ImageUploader from 'react-images-upload';
+
 const styles = (theme) =>
 	({
 		setting :
@@ -43,8 +46,57 @@ const AdvancedSettings = ({
 {
 	const intl = useIntl();
 
+	const onDrop = (picture) =>
+	{
+		if (picture.length > 0)
+		{
+			Resizer.imageFileResizer(picture[0], 1280, 720, 'JPEG', 99, 0,
+				(uri) =>
+				{
+					const reader = new FileReader();
+
+					reader.addEventListener('load', () =>
+					{
+						roomClient.setPicture(reader.result);
+					});
+					reader.readAsDataURL(uri);
+				},
+				'blob');
+		}
+		else
+		{
+			roomClient.setPicture(null);
+		}
+	};
+
 	return (
 		<React.Fragment>
+			<ImageUploader
+				withIcon
+				onChange={onDrop}
+				imgExtension={[ '.jpg', '.jpeg', '.png' ]}
+				maxFileSize={5242880}
+				singleImage
+				withPreview
+				defaultImages={settings.localPicture?[ settings.localPicture ]:[]}
+				buttonType='button'
+				buttonText={intl.formatMessage({
+					id             : 'settings.myPhotoButton',
+					defaultMessage : 'Set my photo'
+				})}
+				label={intl.formatMessage({
+					id             : 'settings.myPhotoLabel',
+					defaultMessage : 'Max. file size: 5MB, accepted: jpg, jpeg, png'
+				})}
+				fileSizeError={intl.formatMessage({
+					id             : 'settings.myPhotoSizeError',
+					defaultMessage : ' file is too large'
+				})}
+				fileTypeError={intl.formatMessage({
+					id             : 'settings.myPhotoTypeError',
+					defaultMessage : ' is not a supported file extension'
+				})}
+			/>
 			<FormControlLabel
 				className={classnames(classes.setting, classes.switchLabel)}
 				control={<Switch checked={settings.advancedMode} onChange={onToggleAdvancedMode} value='advancedMode' />}
