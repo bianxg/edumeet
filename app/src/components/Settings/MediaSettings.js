@@ -217,7 +217,7 @@ const MediaSettings = ({
 
 			<VideoBox className={classes.videoBox}>
 				<VideoView
-					isMirrored
+					isMirrored={settings.mirrorOwnVideo}
 					videoTrack={me.previewWebcamTrack}
 					videoVisible
 				/>
