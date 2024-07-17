@@ -1773,9 +1773,17 @@ export default class RoomClient
 				this._previewWebcamTrack = null;
 			}
 
+			const {
+				resolution,
+				aspectRatio,
+				frameRate
+			} = store.getState().settings;
+
 			const stream = await navigator.mediaDevices.getUserMedia({
 				video : {
-					deviceId : { ideal: newDeviceId }
+					deviceId : { ideal: newDeviceId },
+					...getVideoConstrains(resolution, aspectRatio),
+					frameRate
 				}
 			});
 

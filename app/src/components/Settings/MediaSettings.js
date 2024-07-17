@@ -36,7 +36,7 @@ import VideoBox from '../Controls/VideoBox';
 
 const insertableStreamsSupported = Boolean(RTCRtpSender.prototype.createEncodedStreams);
 
-// const logger = new Logger('MediaSetting');
+const logger = new Logger('MediaSetting');
 
 const NoiseSlider = withStyles(
 	{
@@ -202,8 +202,8 @@ const MediaSettings = ({
 	useEffect(() =>
 	{
 		// do once, after initial render, like `componentDidMount()`
-		roomClient.updatePreviewWebcam();
-		roomClient.updatePreviewMic();
+		roomClient.updatePreviewWebcam({ newDeviceId: settings.selectedWebcam });
+		roomClient.updatePreviewMic({ newDeviceId: settings.selectedAudioDevice });
 
 		return () =>
 		{
@@ -220,6 +220,7 @@ const MediaSettings = ({
 					isMirrored={settings.mirrorOwnVideo}
 					videoTrack={me.previewWebcamTrack}
 					videoVisible
+					videoContain
 				/>
 			</VideoBox>
 
