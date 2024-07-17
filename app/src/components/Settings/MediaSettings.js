@@ -32,6 +32,7 @@ import Switch from '@material-ui/core/Switch';
 import { config } from '../../config';
 import Logger from '../../Logger';
 import VideoView from '../VideoContainers/VideoView';
+import VideoBox from '../Controls/VideoBox';
 
 const insertableStreamsSupported = Boolean(RTCRtpSender.prototype.createEncodedStreams);
 
@@ -99,6 +100,13 @@ const styles = (theme) => ({
 	tabsHeader :
 	{
 		minHeight : '72px'
+	},
+	videoBox :
+	{
+		roundedCorners : true,
+		margin         : theme.spacing(1),
+		marginTop      : theme.spacing(1),
+		marginBottom   : theme.spacing(1)
 	}
 });
 
@@ -194,7 +202,7 @@ const MediaSettings = ({
 	useEffect(() =>
 	{
 		// do once, after initial render, like `componentDidMount()`
-		roomClient.updatePreviewWebcam({ newDeviceId: settings.selectedWebcam });
+		roomClient.updatePreviewWebcam();
 		roomClient.updatePreviewMic();
 
 		return () =>
@@ -207,12 +215,13 @@ const MediaSettings = ({
 	return (
 		<React.Fragment>
 
-			<VideoView
-				isMe
-				isMirrored
-				videoTrack={me.previewWebcamTrack}
-				videoVisible
-			/>
+			<VideoBox className={classes.videoBox}>
+				<VideoView
+					isMirrored
+					videoTrack={me.previewWebcamTrack}
+					videoVisible
+				/>
+			</VideoBox>
 
 			<Tabs
 				className={classes.tabsHeader}

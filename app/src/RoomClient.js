@@ -1468,22 +1468,12 @@ export default class RoomClient
 
 		try
 		{
+			store.dispatch(meActions.setAudioInProgress(true));
 			if (replace)
 			{
 				this._previewMicTrack.stop();
 				this._previewMicTrack = null;
 			}
-
-			if (newDeviceId)
-				store.dispatch(settingsActions.setSelectedAudioDevice(newDeviceId));
-
-			store.dispatch(meActions.setAudioInProgress(true));
-
-			const deviceId = await this._getAudioDeviceId();
-			const device = this._audioDevices[deviceId];
-
-			if (!device)
-				throw new Error('no audio devices');
 
 			const {
 				autoGainControl,
@@ -1497,7 +1487,7 @@ export default class RoomClient
 			const stream = await navigator.mediaDevices.getUserMedia(
 				{
 					audio : {
-						deviceId : { ideal: deviceId },
+						deviceId : { ideal: newDeviceId },
 						sampleRate,
 						channelCount,
 						autoGainControl,
@@ -1516,6 +1506,10 @@ export default class RoomClient
 
 			await this._updateAudioDevices();
 			await this._updateAudioOutputDevices();
+
+			const { deviceId: trackDeviceId } = track.getSettings();
+
+			store.dispatch(settingsActions.setSelectedAudioDevice(trackDeviceId));
 		}
 		catch (error)
 		{
@@ -1773,13 +1767,6 @@ export default class RoomClient
 
 		try
 		{
-			const deviceId = await this._getWebcamDeviceId();
-
-			logger.debug('[deviceId:"%o"]', deviceId);
-
-			if (!deviceId)
-				logger.warn('updatePreviewWebcam() no webcam devices');
-
 			if (replace)
 			{
 				this._previewWebcamTrack.stop();
@@ -1788,7 +1775,7 @@ export default class RoomClient
 
 			const stream = await navigator.mediaDevices.getUserMedia({
 				video : {
-					deviceId : { ideal: deviceId }
+					deviceId : { ideal: newDeviceId }
 				}
 			});
 
@@ -1802,9 +1789,8 @@ export default class RoomClient
 
 			const { deviceId: trackDeviceId } = track.getSettings();
 
-			store.dispatch(settingsActions.setSelectedWebcamDevice(trackDeviceId));
-
 			await this._updateWebcams();
+			store.dispatch(settingsActions.setSelectedWebcamDevice(trackDeviceId));
 
 		}
 		catch (error)
