@@ -32,7 +32,6 @@ import Switch from '@material-ui/core/Switch';
 import { config } from '../../config';
 import Logger from '../../Logger';
 import VideoView from '../VideoContainers/VideoView';
-import VideoBox from '../Controls/VideoBox';
 
 const insertableStreamsSupported = Boolean(RTCRtpSender.prototype.createEncodedStreams);
 
@@ -101,12 +100,12 @@ const styles = (theme) => ({
 	{
 		minHeight : '72px'
 	},
-	videoBox :
+	viewContainer :
 	{
-		roundedCorners : true,
-		margin         : theme.spacing(1),
-		marginTop      : theme.spacing(1),
-		marginBottom   : theme.spacing(1)
+		position : 'relative',
+		width    : '100%',
+		height   : '100%',
+		margin   : theme.spacing(1)
 	}
 });
 
@@ -133,7 +132,8 @@ const MediaSettings = ({
 	me,
 	volume,
 	settings,
-	classes
+	classes,
+	width
 }) =>
 {
 	const intl = useIntl();
@@ -199,6 +199,14 @@ const MediaSettings = ({
 	else
 		audioOutputDevices = [];
 
+	const style =
+	{
+		'width'  : width-16,
+		'height' : (width-16)/settings.aspectRatio
+	};
+
+	logger.debug('width:%d height:%d', style.width, style.height);
+
 	useEffect(() =>
 	{
 		// do once, after initial render, like `componentDidMount()`
@@ -215,14 +223,14 @@ const MediaSettings = ({
 	return (
 		<React.Fragment>
 
-			<VideoBox className={classes.videoBox}>
+			<div className={classes.viewContainer} style={style}>
 				<VideoView
 					isMirrored={settings.mirrorOwnVideo}
 					videoTrack={me.previewWebcamTrack}
 					videoVisible
 					videoContain
 				/>
-			</VideoBox>
+			</div>
 
 			<Tabs
 				className={classes.tabsHeader}
@@ -919,7 +927,8 @@ MediaSettings.propTypes =
 	me                      : appPropTypes.Me.isRequired,
 	volume                  : PropTypes.number,
 	settings                : PropTypes.object.isRequired,
-	classes                 : PropTypes.object.isRequired
+	classes                 : PropTypes.object.isRequired,
+	width                   : PropTypes.number
 };
 
 const mapStateToProps = (state) =>

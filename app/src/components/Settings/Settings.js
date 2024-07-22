@@ -62,6 +62,9 @@ const Settings = ({
 }) =>
 {
 	const intl = useIntl();
+	const paperRef = React.useRef(null);
+
+	const [ dimensions, setDimensions ] = React.useState({ width: 0, height: 0 });
 
 	return (
 		<Dialog
@@ -70,6 +73,19 @@ const Settings = ({
 			onClose={() => handleCloseSettings(false)}
 			classes={{
 				paper : classes.dialogPaper
+			}}
+			PaperProps={{
+				ref : paperRef
+			}}
+			onEntered={() =>
+			{
+				if (paperRef.current)
+				{
+					setDimensions({
+						width  : paperRef.current.offsetWidth,
+						height : paperRef.current.offsetHeight
+					});
+				}
 			}}
 		>
 			<DialogTitle id='form-dialog-title'>
@@ -107,7 +123,7 @@ const Settings = ({
 					})}
 				/>
 			</Tabs>
-			{currentSettingsTab === 'media' && <MediaSettings />}
+			{currentSettingsTab === 'media' && <MediaSettings width={dimensions.width}/>}
 			{currentSettingsTab === 'appearance' && <AppearanceSettings />}
 			{currentSettingsTab === 'advanced' && <AdvancedSettings />}
 			<DialogActions>
