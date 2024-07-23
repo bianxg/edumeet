@@ -397,7 +397,12 @@ export default class RoomClient
 
 		this._previewWebcamTrack = null;
 		this._previewMicTrack = null;
+		this._inRoom = false; // 是否在会中
+	}
 
+	inRoom()
+	{
+		return this._inRoom;
 	}
 
 	close()
@@ -406,6 +411,7 @@ export default class RoomClient
 			return;
 
 		this._closed = true;
+		this._inRoom = false;
 
 		logger.debug('close()');
 
@@ -2973,6 +2979,8 @@ export default class RoomClient
 			store.dispatch(consumerActions.clearConsumers());
 			store.dispatch(roomActions.clearSpotlights());
 			store.dispatch(roomActions.setRoomState('connecting'));
+
+			this._inRoom = false;
 		});
 
 		this._signalingSocket.on('reconnect_failed', () =>
@@ -3092,6 +3100,8 @@ export default class RoomClient
 						store.dispatch(roomActions.setInLobby(false));
 
 						await this._joinRoom({ joinVideo, joinAudio });
+
+						this._inRoom = true;
 
 						break;
 					}

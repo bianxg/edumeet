@@ -105,7 +105,7 @@ const styles = (theme) => ({
 		position : 'relative',
 		width    : '100%',
 		height   : '100%',
-		margin   : theme.spacing(1)
+		margin   : theme.spacing(2)
 	}
 });
 
@@ -201,8 +201,8 @@ const MediaSettings = ({
 
 	const style =
 	{
-		'width'  : width-16,
-		'height' : (width-16)/settings.aspectRatio
+		'width'  : width-32,
+		'height' : (width-32)/settings.aspectRatio
 	};
 
 	logger.debug('width:%d height:%d', style.width, style.height);
@@ -266,10 +266,14 @@ const MediaSettings = ({
 						{
 							if (event.target.value)
 							{
-								roomClient.updateWebcam({
-									restart     : true,
-									newDeviceId : event.target.value
-								});
+								if (roomClient.inRoom())
+								{
+									roomClient.updateWebcam({
+										restart     : true,
+										newDeviceId : event.target.value
+									});
+								}
+								roomClient.updatePreviewWebcam({ newDeviceId: event.target.value });
 							}
 						}}
 						displayEmpty
@@ -443,8 +447,14 @@ const MediaSettings = ({
 						value={settings.selectedAudioDevice || ''}
 						onChange={(event) =>
 						{
-							if (event.target.value)
-								roomClient.updateMic({ restart: true, newDeviceId: event.target.value });
+							if (roomClient.inRoom())
+							{
+								if (event.target.value)
+									roomClient.updateMic(
+										{ restart: true, newDeviceId: event.target.value }
+									);
+							}
+							roomClient.updatePreviewMic({ newDeviceId: event.target.value });
 						}}
 						displayEmpty
 						name={intl.formatMessage({
