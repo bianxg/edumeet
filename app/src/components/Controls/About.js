@@ -16,6 +16,8 @@ import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import { config } from '../../config';
 
+import { version as mediasoupVersin } from 'mediasoup-client';
+
 const styles = (theme) =>
 	({
 		dialogPaper :
@@ -102,7 +104,7 @@ const About = ({
 						id='label.version'
 						defaultMessage='Version'
 					/>
-					:{` ${process.env.REACT_APP_VERSION}`}
+					:{` ${process.env.REACT_APP_VERSION}`}{` (core ${mediasoupVersin})`}
 				</DialogContentText>
 				<Divider variant='middle' light className={classes.divider}/>
 				{
