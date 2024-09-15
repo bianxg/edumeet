@@ -23,3 +23,7 @@ sudo systemctl enable edumeet
 
 # Viewing Logs with journalctl
 journalctl -f -u edumeet
+journalctl -u edumeet.service > edumeet_logs.txt
+journalctl -u edumeet.service | gzip > edumeet_logs.gz
+journalctl -u edumeet.service --since "1 hour ago" > edumeet_logs_last_hour.txt
+journalctl -f -u edumeet.service | tee edumeet_real_time_logs.txt

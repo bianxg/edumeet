@@ -12,7 +12,7 @@ User=bxg
 Group=bxg
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=MEDIASOUP_WORKER_BIN=/home/bxg/project/edumeet/mediasoup/worker/out/Release/mediasoup-worker
-#Environment=NODE_ENV=production
+Environment=NODE_ENV=production
 Environment=DEBUG="edumeet-server* mediasoup* *ERROR*,*WARN*,*INFO*"
 StandardOutput=journal
 StandardError=journal
