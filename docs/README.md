@@ -20,3 +20,6 @@ sudo systemctl start edumeet
 
 # If you want to start edumeet at boot time:
 sudo systemctl enable edumeet
+
+# Viewing Logs with journalctl
+journalctl -f -u edumeet
