@@ -265,7 +265,7 @@ const configSchema = convict({
 			logLevel : {
 				doc     : 'The Mediasoup log level.',
 				format  : String,
-				default : 'warn'
+				default : 'debug'
 			},
 			logTags : {
 				doc     : 'The Mediasoup log tags.',
