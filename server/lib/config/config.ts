@@ -276,7 +276,9 @@ const configSchema = convict({
 					'dtls',
 					'rtp',
 					'srtp',
-					'rtcp'
+					'rtcp',
+					'rtx',
+					'score',
 				]
 			},
 			rtcMinPort : {

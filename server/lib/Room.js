@@ -846,9 +846,8 @@ class Room extends EventEmitter
 		{
 			if (request.method != 'getTransportStats')
 			{
-				logger.debug(
-					'Peer "request" event [method:"%s", peerId:"%s", data:"%o"]',
-					request.method, peer.id, request.data);
+				//logger.debug('Peer "request" event [method:"%s", peerId:"%s", data:"%o"]',request.method, peer.id, request.data);
+				logger.debug('Peer "request" event [method:"%s", peerId:"%s", data:"%s"]',request.method, peer.id, JSON.stringify(request.data));
 			}
 
 			this._handleSocketRequest(peer, request, cb)
@@ -2275,9 +2274,9 @@ class Room extends EventEmitter
 		}
 		else
 		{ 
-			//logger.debug('notify peer [method:"%s", peerId:"%s", data:"%s"]', method, peer.id, JSON.stringify(data));
+			logger.debug('notify peer [method:"%s", peerId:"%s", data:"%s"]', method, peer.id, JSON.stringify(data));
 			//logger.debug('notify peer [method:"%s", peerId:"%s"]', method, peer.id);
-			logger.debug('notify peer [method:"%s", peerId:"%s", data:"%o"]', method, peer.id, data);
+			//logger.debug('notify peer [method:"%s", peerId:"%s", data:"%o"]', method, peer.id, data);
 		}
 
 		if (broadcast)
