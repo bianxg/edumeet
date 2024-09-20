@@ -1968,7 +1968,7 @@ export default class RoomClient
 								width,
 								height,
 								resolutionScalings,
-								pasued : true
+								paused : true
 							}
 						});
 

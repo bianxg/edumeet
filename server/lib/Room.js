@@ -847,8 +847,8 @@ class Room extends EventEmitter
 			if (request.method != 'getTransportStats')
 			{
 				logger.debug(
-					'Peer "request" event [method:"%s", peerId:"%s"]',
-					request.method, peer.id);
+					'Peer "request" event [method:"%s", peerId:"%s", data:"%o"]',
+					request.method, peer.id, request.data);
 			}
 
 			this._handleSocketRequest(peer, request, cb)
@@ -1346,6 +1346,8 @@ class Room extends EventEmitter
 				if (!consumer)
 					throw new NotFoundInMediasoupError(`consumer with id "${consumerId}" not found`);
 
+				await consumer.resume();
+
 				if (consumer.kind === 'video' && consumer.type !== 'simple')
 				{
 					const producerPeer = this._peers[consumer.appData.producerPeerId];
@@ -1355,7 +1357,7 @@ class Room extends EventEmitter
 					this._calcProducerPreferredLayer(producerPeer, producer, 'consumer resumed');
 				}
 
-				await consumer.resume();
+				//await consumer.resume();
 
 				cb();
 
@@ -2268,13 +2270,14 @@ class Room extends EventEmitter
 
 	_notification(peer, method, data = {}, broadcast = false, includeSender = false)
 	{
-		if (method === 'consumerScore' || method === 'producerScore') 
+		if (method === 'consumerScore' || method === 'producerScore' || method == "activeSpeaker") 
 		{
 		}
 		else
 		{ 
 			//logger.debug('notify peer [method:"%s", peerId:"%s", data:"%s"]', method, peer.id, JSON.stringify(data));
-			logger.debug('notify peer [method:"%s", peerId:"%s"]', method, peer.id);
+			//logger.debug('notify peer [method:"%s", peerId:"%s"]', method, peer.id);
+			logger.debug('notify peer [method:"%s", peerId:"%s", data:"%o"]', method, peer.id, data);
 		}
 
 		if (broadcast)

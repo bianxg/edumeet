@@ -7,6 +7,10 @@
 ### [Setup HAproxy / load balancing edumeet](HAproxy.md)
 ### [Scaling and recommended Hardware](SCALING_AND_HARDWARE.md)
 
+cd app
+export NODE_OPTIONS=--openssl-legacy-provider
+yarn build
+
 
 # Stop your locally running server. Copy systemd-service file `edumeet.service` to `/etc/systemd/system/` and check location path settings:
 cp edumeet.service /etc/systemd/system/
