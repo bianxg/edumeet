@@ -279,6 +279,8 @@ const configSchema = convict({
 					'rtcp',
 					'rtx',
 					'score',
+					'simulcast',
+					'bwe',
 				]
 			},
 			rtcMinPort : {
@@ -364,7 +366,7 @@ const configSchema = convict({
 			initialAvailableOutgoingBitrate : {
 				doc     : 'The Mediasoup initial available outgoing bitrate (in bps). [WebRtcTransportOptions](https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions)',
 				format  : 'nat',
-				default : 1000000
+				default : 2000000
 			},
 			maxIncomingBitrate : {
 				doc     : 'The Mediasoup maximum incoming bitrate for each transport. (in bps). [setMaxIncomingBitrate](https://mediasoup.org/documentation/v3/mediasoup/api/#transport-setMaxIncomingBitrate)',
