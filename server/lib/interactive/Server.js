@@ -80,7 +80,9 @@ class Interactive
 						this.log('- dr, dumpRouter [id]         : dump mediasoup Router with given id (or the latest created one)');
 						this.log('- dt, dumpTransport [id]      : dump mediasoup Transport with given id (or the latest created one)');
 						this.log('- dp, dumpProducer [id]       : dump mediasoup Producer with given id (or the latest created one)');
+						this.log('- dps, dumpProducers          : dump mediasoup Producer)');
 						this.log('- dc, dumpConsumer [id]       : dump mediasoup Consumer with given id (or the latest created one)');
+						this.log('- dcs, dumpConsumers          : dump mediasoup Consumers)');
 						this.log('- ddp, dumpDataProducer [id]  : dump mediasoup DataProducer with given id (or the latest created one)');
 						this.log('- ddc, dumpDataConsumer [id]  : dump mediasoup DataConsumer with given id (or the latest created one)');
 						this.log('- st, statsTransport [id]     : get stats for mediasoup Transport with given id (or the latest created one)');
@@ -306,6 +308,25 @@ class Interactive
 						break;
 					}
 
+					case 'dps':
+					case 'dumpProducers':
+					{
+						this.log(`producer size:${producers.size}\n`);
+						for (const producer of producers.values())
+						{
+							try
+							{
+								this.log(`producer id:${producer.id}\nkind:${producer.kind}\ntype:${producer.type}\nappData:${JSON.stringify(producer.appData, null, '  ')}\n`);
+							}
+							catch (error)
+							{
+								this.error(`producer.dump() failed: ${error}`);
+							}
+						}
+						this.log(`producer size:${producers.size}\n`);
+						break;
+					}
+
 					case 'dc':
 					case 'dumpConsumer':
 					{
@@ -329,6 +350,26 @@ class Interactive
 						{
 							this.error(`consumer.dump() failed: ${error}`);
 						}
+
+						break;
+					}
+
+					case 'dcs':
+					case 'dumpConsumers':
+					{
+						this.log(`consumer size:${consumers.size}\n`);
+						for (const consumer of consumers.values())
+						{
+							try
+							{
+								this.log(`consumer id:${consumer.id}\nkind:${consumer.kind}\ntype:${consumer.type}\nappData:${JSON.stringify(consumer.appData, null, '  ')}`);
+							}
+							catch (error)
+							{
+								this.error(`consumer.dump() failed: ${error}`);
+							}
+						}
+						this.log(`consumer size:${consumers.size}\n`);
 
 						break;
 					}
